@@ -25,6 +25,7 @@ enum recombination_algorithm {
 
 enum reionization_parametrization {
                                    reio_none,       /**< no reionization */
+                                   reio_gomp,       /**< reionization parametrized with gomp */
                                    reio_camb,       /**< reionization parameterized like in CAMB */
                                    reio_bins_tanh,  /**< binned reionization history with tanh inteprolation between bins */
                                    reio_half_tanh,  /**< half a tanh, instead of the full tanh */
@@ -637,6 +638,9 @@ extern "C" {
                                           );
 
   int thermodynamics_reionization_function(double z,
+                                           struct background * pba,
+                                           struct primordial * ppm,
+                                           struct fourier * pfo,
                                            struct thermodynamics * pth,
                                            struct thermo_reionization_parameters * preio,
                                            double * x);

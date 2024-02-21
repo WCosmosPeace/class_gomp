@@ -472,6 +472,7 @@ int thermodynamics_free_input(
   switch(pth->reio_parametrization){
 
   case reio_none:
+  case reio_gomp:
   case reio_camb:
   case reio_half_tanh:
   default:
@@ -1025,6 +1026,7 @@ int thermodynamics_indices(
     break;
 
     /* case where x_e(z) taken like in CAMB (other cases can be added) */
+  case reio_gomp:
   case reio_camb:
   case reio_half_tanh:
     class_define_index(ptrp->index_re_reio_redshift,_TRUE_,index_re,1);
@@ -1191,11 +1193,14 @@ int thermodynamics_set_parameters_reionization(
     break;
 
     /** - (b) if reionization implemented like in CAMB, or half tanh like in  1209.0247 */
+  case reio_gomp:
   case reio_camb:
   case reio_half_tanh:
 
     /** - --> set values of these parameters, excepted those depending on the reionization redshift */
-
+    if (pth->reio_parametrization == reio_gomp) {
+      preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
+    } 
     if (pth->reio_parametrization == reio_camb) {
       /* xe_after_reio: H + singly ionized He (checked before that denominator is non-zero) */
       preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
@@ -1232,6 +1237,20 @@ int thermodynamics_set_parameters_reionization(
       preio->reionization_parameters[preio->index_re_reio_redshift] = pth->z_reio;
 
       /* infer starting redshift for hydrogen */
+
+      if (pth->reio_parametrization == reio_gomp) {
+
+        preio->reionization_parameters[preio->index_re_reio_start] = preio->reionization_parameters[preio->index_re_reio_redshift]+
+          ppr->reionization_start_factor*pth->reionization_width;
+
+        /* if starting redshift for helium is larger, take that one (does not happen in realistic models) */
+        if (preio->reionization_parameters[preio->index_re_reio_start] <
+            pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width)
+
+          preio->reionization_parameters[preio->index_re_reio_start] =
+            pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width;
+
+      }
 
       if (pth->reio_parametrization == reio_camb) {
 
@@ -1815,6 +1834,7 @@ int thermodynamics_output_summary(
     printf(" -> no reionization requested, optical depth = %f\n",pth->tau_reio);
     break;
 
+  case reio_gomp:
   case reio_camb:
   case reio_half_tanh:
     switch (pth->reio_z_or_tau) {
@@ -2330,6 +2350,14 @@ int thermodynamics_reionization_evolve_with_tau(
   ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift] = z_inf;
   /* minimum possible starting redshift */
   switch (pth->reio_parametrization) {
+
+
+  case reio_gomp:
+    ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ppr->reionization_start_factor*pth->reionization_width;
+    if (ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] < pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width) {
+      ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width;
+    }
+
   case reio_camb:
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ppr->reionization_start_factor*pth->reionization_width;
     if (ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] < pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width) {
@@ -2339,7 +2367,7 @@ int thermodynamics_reionization_evolve_with_tau(
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_inf;
     break;
   default:
-    class_stop(pth->error_message,"Should not be there: tau_reio acan be an input only for reio_camb and reio_half_tanh");
+    class_stop(pth->error_message,"Should not be there: tau_reio acan be an input only for reio_camb and reio_half_tanh, gomp does not allow either");
     break;
   }
 
@@ -2397,6 +2425,16 @@ int thermodynamics_reionization_evolve_with_tau(
 
     /* infer starting redshift for hydrogen (Note, that this is only the start of the ADDITIONAL tanh re-ionization function)*/
     switch (pth->reio_parametrization) {
+
+    case reio_gomp:
+      ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift]+ppr->reionization_start_factor*pth->reionization_width;
+      /* if starting redshift for helium is larger, take that one
+ *        *    (does not happen in realistic models) */
+      if (ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] < pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width) {
+        ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width;
+      }
+      break;
+
     case reio_camb:
       ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift]+ppr->reionization_start_factor*pth->reionization_width;
       /* if starting redshift for helium is larger, take that one
@@ -2409,7 +2447,7 @@ int thermodynamics_reionization_evolve_with_tau(
       ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_mid;
       break;
     default:
-      class_stop(pth->error_message,"Should not be there: tau_reio acan be an input only for reio_camb and reio_half_tanh");
+      class_stop(pth->error_message,"Should not be there: tau_reio acan be an input only for reio_camb and reio_half_tanh, gomp does not allow either");
       break;
     }
 
@@ -4105,7 +4143,7 @@ int thermodynamics_ionization_fractions(
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_xe_before] = x;
 
     /* compute x */
-    class_call(thermodynamics_reionization_function(z,pth,ptw->ptrp,&x),
+    class_call(thermodynamics_reionization_function(z,pba,pth,ptw->ptrp,&x),
                pth->error_message,
                pth->error_message);
   }
@@ -4126,6 +4164,9 @@ int thermodynamics_ionization_fractions(
 
 int thermodynamics_reionization_function(
                                          double z,
+                                         struct background * pba,
+                                         struct primordial * ppm,
+                                         struct fourier * pfo,
                                          struct thermodynamics * pth,
                                          struct thermo_reionization_parameters * preio,
                                          double * x
@@ -4141,6 +4182,8 @@ int thermodynamics_reionization_function(
   int jump;
   double center,before, after,width,one_jump;
   double z_min, z_max;
+  double p_testa;
+  double p_te;
 
   switch (pth->reio_parametrization) {
 
@@ -4150,22 +4193,27 @@ int thermodynamics_reionization_function(
     break;
 
   /** add the gromp curve here */
-//  case reio_gromp:
+  case reio_gomp:
+  // testing sigma8 and others
+  p_testa = pba->h;
+  p_te = pba->Omega0_b;
+  fprintf(stdout,"The value of h is %e and Ob is %e hopefully.",p_testa,p_te);
 //  still need the case z > z_reio_start 
-//  if (z > preio->reionization_parameters[perio->index_re_reio_start]) {
-//    *x = preio->reionization_parameters[preio->index_re_xe_before];
-//  }
-//  else {
+  if (z > preio->reionization_parameters[preio->index_re_reio_start]) {
+    *x = preio->reionization_parameters[preio->index_re_xe_before];
+  }
+  else {
 //  start the hydrogen reionization contribution
 //
 //  for helium contribution we could use the helium tanh prescription
 //
 //  case z < z_reio_start: helium contribution (tanh of simpler argument)
-//  argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z)
-//             /preio->reionization_parameters[preio->index_re_helium_fullreio_width];
-//  *x += preio->reionization_parameters[preio->index_re_helium_fullreio_fraction]
-//        *(tanh(argument)+1.)/2.;
-
+  argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z)
+             /preio->reionization_parameters[preio->index_re_helium_fullreio_width];
+  *x += preio->reionization_parameters[preio->index_re_helium_fullreio_fraction]
+        *(tanh(argument)+1.)/2.;
+  }
+  break;
     /** - implementation of ionization function similar to the one in CAMB */
   case reio_camb:
 
