@@ -4149,6 +4149,23 @@ int thermodynamics_reionization_function(
     *x = preio->reionization_parameters[preio->index_re_xe_before];
     break;
 
+  /** add the gromp curve here */
+//  case reio_gromp:
+//  still need the case z > z_reio_start 
+//  if (z > preio->reionization_parameters[perio->index_re_reio_start]) {
+//    *x = preio->reionization_parameters[preio->index_re_xe_before];
+//  }
+//  else {
+//  start the hydrogen reionization contribution
+//
+//  for helium contribution we could use the helium tanh prescription
+//
+//  case z < z_reio_start: helium contribution (tanh of simpler argument)
+//  argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z)
+//             /preio->reionization_parameters[preio->index_re_helium_fullreio_width];
+//  *x += preio->reionization_parameters[preio->index_re_helium_fullreio_fraction]
+//        *(tanh(argument)+1.)/2.;
+
     /** - implementation of ionization function similar to the one in CAMB */
   case reio_camb:
 
