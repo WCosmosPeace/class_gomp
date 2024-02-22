@@ -444,7 +444,7 @@ int input_read_from_file(struct file_content * pfc,
       printf("    calling background module to extract the effective w(tau), Omega_m(tau) parameters");
       printf("    required by this method\n");
     }
-    class_call(input_prepare_pk_eq(ppr,pba,pth,pfo,input_verbose,errmsg),
+    class_call(input_prepare_pk_eq(ppr,pba,ppm,pth,pfo,input_verbose,errmsg),
                errmsg,
                errmsg);
   }
@@ -1413,7 +1413,7 @@ int input_try_unknown_parameters(double * unknown_parameter,
     pr.thermo_Nz_log = 500;
     th.thermodynamics_verbose = 0;
     th.hyrec_verbose = 0;
-    class_call_except(thermodynamics_init(&pr,&ba,&th), th.error_message, errmsg, background_free(&ba);thermodynamics_free_input(&th);perturbations_free_input(&pt););
+    class_call_except(thermodynamics_init(&pr,&ba,&pm,&th), th.error_message, errmsg, background_free(&ba);thermodynamics_free_input(&th);perturbations_free_input(&pt););
   }
 
   if (pfzw->required_computation_stage >= cs_perturbations){
@@ -2183,6 +2183,9 @@ int input_read_parameters_general(struct file_content * pfc,
     if (strcmp(string1,"reio_none") == 0){
       pth->reio_parametrization = reio_none;
     }
+    else if (strcmp(string1,"reio_gomp") == 0){
+      pth->reio_parametrization = reio_gomp;
+    }
     else if (strcmp(string1,"reio_camb") == 0){
       pth->reio_parametrization = reio_camb;
     }
@@ -2200,7 +2203,7 @@ int input_read_parameters_general(struct file_content * pfc,
     }
     else{
       class_stop(errmsg,
-                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
+                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_gomp','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
     }
   }
 
@@ -2211,6 +2214,7 @@ int input_read_parameters_general(struct file_content * pfc,
     break;
 
     /** 8.a) Reionization parameters if reio_parametrization=reio_camb */
+  case reio_gomp:
   case reio_camb:
   case reio_half_tanh:
     /* Read */
@@ -3824,6 +3828,7 @@ int input_read_parameters_nonlinear(struct file_content * pfc,
 
 int input_prepare_pk_eq(struct precision * ppr,
                         struct background *pba,
+                        struct primordial * ppm,
                         struct thermodynamics *pth,
                         struct fourier *pfo,
                         int input_verbose,
@@ -3914,7 +3919,7 @@ int input_prepare_pk_eq(struct precision * ppr,
     class_call(background_init(ppr,pba),
                pba->error_message,
                errmsg);
-    class_call(thermodynamics_init(ppr,pba,pth),
+    class_call(thermodynamics_init(ppr,pba,ppm,pth),
                pth->error_message,
                errmsg);
     delta_tau = pfo->pk_eq_tau[index_pk_eq_z] - pth->tau_rec;
@@ -3937,7 +3942,7 @@ int input_prepare_pk_eq(struct precision * ppr,
                                      &tau_of_z),
                  pba->error_message,
                  errmsg);
-      class_call(thermodynamics_init(ppr,pba,pth),
+      class_call(thermodynamics_init(ppr,pba,ppm,pth),
                  pth->error_message,
                  errmsg);
 

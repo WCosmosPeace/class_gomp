@@ -397,6 +397,7 @@ extern "C" {
 
   int input_prepare_pk_eq(struct precision * ppr,
                           struct background * pba,
+                          struct primordial * ppm,
                           struct thermodynamics * pth,
                           struct fourier * pfo,
                           int input_verbose,

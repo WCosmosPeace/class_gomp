@@ -298,6 +298,8 @@ int thermodynamics_at_z(
 int thermodynamics_init(
                         struct precision * ppr,
                         struct background * pba,
+                        struct primordial * ppm,
+                        //struct fourier * pfo,
                         struct thermodynamics * pth
                         ) {
 
@@ -401,7 +403,7 @@ int thermodynamics_init(
              pth->error_message);
 
   /** - solve recombination and reionization and store values of \f$ z, x_e, d \kappa / d \tau, T_b, c_b^2 \f$  */
-  class_call(thermodynamics_solve(ppr,pba,pth,ptw,pvecback),
+  class_call(thermodynamics_solve(ppr,pba,ppm,pth,ptw,pvecback),
              pth->error_message,
              pth->error_message);
 
@@ -1549,6 +1551,8 @@ int thermodynamics_set_parameters_reionization(
 int thermodynamics_solve(
                          struct precision * ppr,
                          struct background * pba,
+                         struct primordial * ppm,
+                         //struct fourier * pfo,
                          struct thermodynamics * pth,
                          struct thermo_workspace * ptw,
                          double * pvecback
@@ -1588,6 +1592,8 @@ int thermodynamics_solve(
 
   /** - define the fields of the 'thermodynamics parameter and workspace' structure */
   tpaw.pba = pba;
+  tpaw.ppm = ppm;
+  //tpaw.pfo = pfo;
   tpaw.ppr = ppr;
   tpaw.pth = pth;
   tpaw.pvecback = pvecback;
@@ -1635,6 +1641,8 @@ int thermodynamics_solve(
 
     class_call(thermodynamics_vector_init(ppr,
                                           pba,
+                                          ppm,
+                                          //pfo,
                                           pth,
                                           interval_limit[index_interval],
                                           ptw),
@@ -1937,6 +1945,8 @@ int thermodynamics_workspace_free(
 int thermodynamics_vector_init(
                                struct precision * ppr,
                                struct background * pba,
+                               struct primordial * ppm,
+                               //struct fourier * pfo,
                                struct thermodynamics * pth,
                                double mz,
                                struct thermo_workspace * ptw
@@ -2068,7 +2078,7 @@ int thermodynamics_vector_init(
     ptdw->Tmat = ptdw->ptv->y[ptdw->ptv->index_ti_D_Tmat] + ptw->Tcmb*(1.+z);
 
     /* Obtain initial contents of new vector analytically, especially x_He */
-    class_call(thermodynamics_ionization_fractions(z,ptdw->ptv->y,pba,pth,ptw,ptdw->ap_current-1),
+    class_call(thermodynamics_ionization_fractions(z,ptdw->ptv->y,pba,ppm,pth,ptw,ptdw->ap_current-1),
                pth->error_message,
                pth->error_message);
 
@@ -2096,7 +2106,7 @@ int thermodynamics_vector_init(
     ptdw->Tmat = ptdw->ptv->y[ptdw->ptv->index_ti_D_Tmat] + ptw->Tcmb*(1.+z);
 
     /* Obtain initial contents of new vector analytically, especially x_H */
-    class_call(thermodynamics_ionization_fractions(z,ptdw->ptv->y,pba,pth,ptw,ptdw->ap_current-1),
+    class_call(thermodynamics_ionization_fractions(z,ptdw->ptv->y,pba,ppm,pth,ptw,ptdw->ap_current-1),
                pth->error_message,
                pth->error_message);
 
@@ -2206,6 +2216,8 @@ int thermodynamics_reionization_evolve_with_tau(
 
   struct precision * ppr;
   struct background * pba;
+  struct primordial * ppm;
+  //struct fourier * pfo;
   struct thermodynamics * pth;
   struct thermo_workspace * ptw;
 
@@ -2223,6 +2235,8 @@ int thermodynamics_reionization_evolve_with_tau(
 
   ppr = ptpaw->ppr;
   pba = ptpaw->pba;
+  ppm = ptpaw->ppm;
+  //pfo = ptpaw->pfo;
   pth = ptpaw->pth;
   ptw = ptpaw->ptw;
 
@@ -2577,6 +2591,8 @@ int thermodynamics_derivs(
   struct thermodynamics_parameters_and_workspace * ptpaw;
   struct precision * ppr;
   struct background * pba;
+  struct primordial * ppm;
+  //struct fourier * pfo;
   struct thermodynamics * pth;
   double * pvecback;
   struct thermo_workspace * ptw;
@@ -2598,6 +2614,8 @@ int thermodynamics_derivs(
   ptpaw = parameters_and_workspace;
   ppr = ptpaw->ppr;
   pba = ptpaw->pba;
+  ppm = ptpaw->ppm;
+  //pfo = ptpaw->pfo;
   pth = ptpaw->pth;
   pin = &(pth->in);
   /* vector of background quantities */
@@ -2648,7 +2666,7 @@ int thermodynamics_derivs(
       compute re-ionization effects on x_e; The output of this function
       is stored in the workspace ptdw */
 
-  class_call(thermodynamics_ionization_fractions(z,y,pba,pth,ptw,ap_current),
+  class_call(thermodynamics_ionization_fractions(z,y,pba,ppm,pth,ptw,ap_current),
              pth->error_message,
              error_message);
 
@@ -2946,6 +2964,8 @@ int thermodynamics_sources(
   /* Structures as shorthand_notation */
   struct thermodynamics_parameters_and_workspace * ptpaw;
   struct background * pba;
+  struct primordial * ppm;
+  //struct fourier * pfo;
   struct thermodynamics * pth;
   struct thermo_workspace * ptw;
   struct thermo_diffeq_workspace * ptdw;
@@ -2960,6 +2980,8 @@ int thermodynamics_sources(
   /* Structs */
   ptpaw = thermo_parameters_and_workspace;
   pba = ptpaw->pba;
+  ppm = ptpaw->ppm;
+  //pfo = ptpaw->pfo;
   pth = ptpaw->pth;
   /* Thermo workspace & vector */
   ptw = ptpaw->ptw;
@@ -3002,7 +3024,7 @@ int thermodynamics_sources(
   /* Smoothing if we are shortly after an approximation switch, i.e. if z is within 2 delta after the switch*/
   if ((ap_current != 0) && (z > ptdw->ap_z_limits[ap_current-1]-2*ptdw->ap_z_limits_delta[ap_current])) {
 
-    class_call(thermodynamics_ionization_fractions(z,y,pba,pth,ptw,ap_current-1),
+    class_call(thermodynamics_ionization_fractions(z,y,pba,ppm,pth,ptw,ap_current-1),
                pth->error_message,
                error_message);
 
@@ -3985,6 +4007,8 @@ int thermodynamics_ionization_fractions(
                                         double z,
                                         double * y,
                                         struct background * pba,
+                                        struct primordial * ppm,
+                                       // struct fourier * pfo,
                                         struct thermodynamics * pth,
                                         struct thermo_workspace * ptw,
                                         int current_ap
@@ -4143,7 +4167,7 @@ int thermodynamics_ionization_fractions(
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_xe_before] = x;
 
     /* compute x */
-    class_call(thermodynamics_reionization_function(z,pba,pth,ptw->ptrp,&x),
+    class_call(thermodynamics_reionization_function(z,pba,ppm,pth,ptw->ptrp,&x),
                pth->error_message,
                pth->error_message);
   }
@@ -4166,7 +4190,7 @@ int thermodynamics_reionization_function(
                                          double z,
                                          struct background * pba,
                                          struct primordial * ppm,
-                                         struct fourier * pfo,
+                                         //struct fourier * pfo,
                                          struct thermodynamics * pth,
                                          struct thermo_reionization_parameters * preio,
                                          double * x
@@ -4184,6 +4208,7 @@ int thermodynamics_reionization_function(
   double z_min, z_max;
   double p_testa;
   double p_te;
+  double p_tro;
 
   switch (pth->reio_parametrization) {
 
@@ -4197,7 +4222,8 @@ int thermodynamics_reionization_function(
   // testing sigma8 and others
   p_testa = pba->h;
   p_te = pba->Omega0_b;
-  fprintf(stdout,"The value of h is %e and Ob is %e hopefully.",p_testa,p_te);
+  p_tro = ppm->n_s;
+  fprintf(stdout,"The value of h is %e, ns=%e, and Ob is %e hopefully.",p_testa,p_tro,p_te);
 //  still need the case z > z_reio_start 
   if (z > preio->reionization_parameters[preio->index_re_reio_start]) {
     *x = preio->reionization_parameters[preio->index_re_xe_before];

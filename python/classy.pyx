@@ -385,7 +385,7 @@ cdef class Class:
             self.ncp.add("background")
 
         if "thermodynamics" in level:
-            if thermodynamics_init(&(self.pr), &(self.ba),
+            if thermodynamics_init(&(self.pr), &(self.ba), &(self.pm),
                                    &(self.th)) == _FAILURE_:
                 self.struct_cleanup()
                 raise CosmoComputationError(self.th.error_message)
