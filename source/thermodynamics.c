@@ -4202,6 +4202,12 @@ int thermodynamics_reionization_function(
   double argument;
   int i;
   double z_jump;
+  
+  /** necessary local variables for gromp reio */
+  double pivot;
+  double tilt;
+  double ar;
+  double scale;
 
   int jump;
   double center,before, after,width,one_jump;
@@ -4209,6 +4215,7 @@ int thermodynamics_reionization_function(
   double p_testa;
   double p_te;
   double p_tro;
+  double p_so;
 
   switch (pth->reio_parametrization) {
 
@@ -4223,14 +4230,22 @@ int thermodynamics_reionization_function(
   p_testa = pba->h;
   p_te = pba->Omega0_b;
   p_tro = ppm->n_s;
-  fprintf(stdout,"The value of h is %e, ns=%e, and Ob is %e hopefully.",p_testa,p_tro,p_te);
+  p_so = pth->sigma8;
+  fprintf(stdout,"The value of h is %e, ns=%e, sigma8=%e, and Ob is %e hopefully.",p_testa,p_tro,p_so,p_te);
 //  still need the case z > z_reio_start 
   if (z > preio->reionization_parameters[preio->index_re_reio_start]) {
     *x = preio->reionization_parameters[preio->index_re_xe_before];
   }
   else {
 //  start the hydrogen reionization contribution
-//
+//  
+  scale = 1./(1 + z);
+  tilt = 6.747937;
+  pivot = pba->Omega0_b/(pba->h - pba->Omega0_b*pth->sigma8) * 1./pth->sigma8 - pth->sigma8 - pba->Omega0_cdm*(pba->h + 0.5900404)
+          - pow(ppm->n_s,pow(ppm_>n_s/pba->h,-0.09160705/pba->Omega0_b));
+  ar = exp((log(scale) - pivot) * tilt);
+  /** finally gompertz curve */
+   
 //  for helium contribution we could use the helium tanh prescription
 //
 //  case z < z_reio_start: helium contribution (tanh of simpler argument)

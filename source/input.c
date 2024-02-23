@@ -790,10 +790,12 @@ int input_shooting(struct file_content * pfc,
                 errmsg);
     class_alloc(fzw.target_value,
                 1*sizeof(double),
-                errmsg);
+                errmsg); 
 
     /* store name of target parameter */
     if (flag1 == _TRUE_) {
+      // P: need hack to get sigma8 to thermodynamics 
+      pth->sigma8 = param1;
       fzw.target_name[0] = sigma8;
       fzw.target_value[0] = param1;
     }

@@ -84,6 +84,8 @@ struct thermodynamics
   short compute_cb2_derivatives; /**< do we want to include in computation derivatives of baryon sound speed? */
 
   short compute_damping_scale; /**< do we want to compute the simplest analytic approximation to the photon damping (or diffusion) scale? */
+  
+  double sigma8;       /**< sigma_8 stored here for the gompertz curve */
 
   /** parameters for interacting dark matter */
 
@@ -462,6 +464,7 @@ struct thermo_workspace {
   double SIunit_H0;    /**< defined as in RECFAST : Hubble parameter today in SI units */
   double SIunit_nH0;   /**< defined as in RECFAST : Hydrogen number density today in SI units*/
   double Tcmb;         /**< CMB temperature today in Kelvin */
+  
 
   /* Most important and useful constants */
   double const_NR_numberdens;  /**< prefactor in number density of nonrelativistic species */
