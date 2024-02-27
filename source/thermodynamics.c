@@ -1240,19 +1240,18 @@ int thermodynamics_set_parameters_reionization(
 
       /* infer starting redshift for hydrogen */
 
-      if (pth->reio_parametrization == reio_gomp) {
+      //if (pth->reio_parametrization == reio_gomp) {
 
-        preio->reionization_parameters[preio->index_re_reio_start] = preio->reionization_parameters[preio->index_re_reio_redshift]+
-          ppr->reionization_start_factor*pth->reionization_width;
+        //preio->reionization_parameters[preio->index_re_reio_start] = 15.; // 20 was too large
 
         /* if starting redshift for helium is larger, take that one (does not happen in realistic models) */
-        if (preio->reionization_parameters[preio->index_re_reio_start] <
-            pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width)
+       // if (preio->reionization_parameters[preio->index_re_reio_start] <
+           // pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width)
 
-          preio->reionization_parameters[preio->index_re_reio_start] =
-            pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width;
+         // preio->reionization_parameters[preio->index_re_reio_start] =
+       //     pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width;
 
-      }
+     // }
 
       if (pth->reio_parametrization == reio_camb) {
 
@@ -1268,7 +1267,7 @@ int thermodynamics_set_parameters_reionization(
 
       }
       else {
-
+        // this will include the gomp case
         preio->reionization_parameters[preio->index_re_reio_start] = pth->z_reio;
       }
 
@@ -2441,7 +2440,7 @@ int thermodynamics_reionization_evolve_with_tau(
     switch (pth->reio_parametrization) {
 
     case reio_gomp:
-      ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift]+ppr->reionization_start_factor*pth->reionization_width;
+      ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = 20.;
       /* if starting redshift for helium is larger, take that one
  *        *    (does not happen in realistic models) */
       if (ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] < pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width) {
@@ -4208,6 +4207,8 @@ int thermodynamics_reionization_function(
   double tilt;
   double ar;
   double scale;
+  double xHI;
+  double temp;
 
   int jump;
   double center,before, after,width,one_jump;
@@ -4227,11 +4228,11 @@ int thermodynamics_reionization_function(
   /** add the gromp curve here */
   case reio_gomp:
   // testing sigma8 and others
-  p_testa = pba->h;
-  p_te = pba->Omega0_b;
-  p_tro = ppm->n_s;
-  p_so = pth->sigma8;
-  fprintf(stdout,"The value of h is %e, ns=%e, sigma8=%e, and Ob is %e hopefully.",p_testa,p_tro,p_so,p_te);
+  //p_testa = pba->h;
+  //p_te = pba->Omega0_b;
+  //p_tro = ppm->n_s;
+ // p_so = pth->sigma8;
+  //fprintf(stdout,"The value of h is %e, ns=%e, sigma8=%e, and Ob is %e hopefully.",p_testa,p_tro,p_so,p_te);
 //  still need the case z > z_reio_start 
   if (z > preio->reionization_parameters[preio->index_re_reio_start]) {
     *x = preio->reionization_parameters[preio->index_re_xe_before];
@@ -4239,13 +4240,18 @@ int thermodynamics_reionization_function(
   else {
 //  start the hydrogen reionization contribution
 //  
-  scale = 1./(1 + z);
+  scale = 1./(1. + z);
   tilt = 6.747937;
-  pivot = pba->Omega0_b/(pba->h - pba->Omega0_b*pth->sigma8) * 1./pth->sigma8 - pth->sigma8 - pba->Omega0_cdm*(pba->h + 0.5900404)
-          - pow(ppm->n_s,pow(ppm_>n_s/pba->h,-0.09160705/pba->Omega0_b));
+  temp = pow(ppm->n_s,-0.09160705/pba->Omega0_b);
+  pivot = (pba->Omega0_b/(pba->h - pow(pba->Omega0_b,pth->sigma8)))/pth->sigma8 - pth->sigma8 - pba->Omega0_cdm*(pba->h + 0.5900404)
+          - pow(ppm->n_s,temp/pba->h);
   ar = exp((log(scale) - pivot) * tilt);
   /** finally gompertz curve */
-   
+  xHI = exp(-exp(log(ar) + 0.11944468 * exp(ar)));
+  *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before])
+       *(1. - xHI)
+       +preio->reionization_parameters[preio->index_re_xe_before]; 
+  fprintf(stdout,"Checking issues: z_start=%e, z=%e, pivot=%e, xHI=%e, and x=%e \n",preio->reionization_parameters[preio->index_re_reio_start],z,pivot,xHI,*x);
 //  for helium contribution we could use the helium tanh prescription
 //
 //  case z < z_reio_start: helium contribution (tanh of simpler argument)
