@@ -4251,10 +4251,10 @@ int thermodynamics_reionization_function(
   *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before])
        *(1. - xHI)
        +preio->reionization_parameters[preio->index_re_xe_before]; 
-  fprintf(stdout,"Checking issues: z_start=%e, z=%e, pivot=%e, xHI=%e, and x=%e \n",preio->reionization_parameters[preio->index_re_reio_start],z,pivot,xHI,*x);
+  //fprintf(stdout,"Checking issues: z_start=%e, z=%e, pivot=%e, xHI=%e, and x=%e \n",preio->reionization_parameters[preio->index_re_reio_start],z,pivot,xHI,*x);
 //  for helium contribution we could use the helium tanh prescription
 //
-//  case z < z_reio_start: helium contribution (tanh of simpler argument)
+//  case z < z_reio_start: helium contribution -- second reio -- (tanh of simpler argument)
   argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z)
              /preio->reionization_parameters[preio->index_re_helium_fullreio_width];
   *x += preio->reionization_parameters[preio->index_re_helium_fullreio_fraction]
