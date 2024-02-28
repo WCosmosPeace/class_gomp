@@ -20,6 +20,7 @@ gomp_settings = {# LambdaCDM parameters
                    'omega_cdm': 0.1201075,
                    'sigma8': 0.8159,
 		   'n_s': 0.9660499,
+		   'reio_parametrization': 'reio_gomp',
                    'z_reio': 20. # start of reionization
 }
 
@@ -29,10 +30,15 @@ tanh_settings = {# LambdaCDM parameters
 		   'omega_cdm': 0.1201075,
 		   'sigma8': 0.8159,
 		   'n_s': 0.9660499,
-		   'z_reio': 7. # midpoint of reionization
+		   'reio_parametrization': 'reio_camb',
+		   'z_reio': 7.9, # midpoint of reionization
+		   'reionization_width': 0.5
 }
 
-common = {'output':'tCl,pCl,lCl,mPk','lensing':'yes','P_k_max_1/Mpc':3.0}
+common = {
+	'output':'tCl,pCl,lCl,mPk',
+	'lensing':'yes',
+	'P_k_max_1/Mpc':3.0}
 
 # max l
 l_max = 2500
@@ -42,6 +48,8 @@ gomp = Class()
 gomp.set(gomp_settings)
 gomp.set(common)
 gomp.compute()
+
+print('The optical depth for Gomp is ', gomp.tau_reio())
 
 gomp_cls = gomp.lensed_cl(l_max)
 ll = gomp_cls['ell'][2:] # same for both of them
@@ -55,6 +63,8 @@ tanh = Class()
 tanh.set(tanh_settings)
 tanh.set(common)
 tanh.compute()
+
+print('The optical depth for Tanh is ', tanh.tau_reio())
 
 tanh_cls = tanh.lensed_cl(l_max)
 tanh_clTT = tanh_cls['tt'][2:]
@@ -79,8 +89,8 @@ plt.grid()
 
 plt.loglog(ll, factor * gomp_clTT, 'r-', label=r'Gomp: $\mathrm{TT}$')
 plt.loglog(ll, factor * tanh_clTT, 'r:', label=r'Tanh: $\mathrm{TT}$')
-plt.loglog(ll, factor * np.abs(gomp_clTE), '-', color='purple', label=r'Gomp: $\mathrm{TE}$')
-plt.loglog(ll, factor * np.abs(tanh_clTE), ':', color='purple', label=r'Tanh: $\mathrm{TE}$')
+plt.loglog(ll, factor * np.abs(gomp_clTE), '-', color='purple', label=r'Gomp: $|\mathrm{TE}|$')
+plt.loglog(ll, factor * np.abs(tanh_clTE), ':', color='purple', label=r'Tanh: $|\mathrm{TE}|$')
 plt.loglog(ll, factor * gomp_clEE, 'b-', label=r'Gomp: $\mathrm{EE}$')
 plt.loglog(ll, factor * tanh_clEE, 'b:', label=r'Tanh: $\mathrm{EE}$')
 plt.loglog(ll, factor * gomp_clBB, 'g-', label=r'Gomp: $\mathrm{BB}$')
