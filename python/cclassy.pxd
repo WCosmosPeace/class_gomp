@@ -443,7 +443,7 @@ cdef extern from "class.h":
     int input_read_from_file(void*, void*, void*, void*, void*, void*, void*, void*, void*,
         void*, void*, void*, char*)
     int background_init(void*,void*)
-    int thermodynamics_init(void*,void*,void*,void*,void*)
+    int thermodynamics_init(void*,void*,void*,void*)
     int perturbations_init(void*,void*,void*,void*)
     int primordial_init(void*,void*,void*)
     int fourier_init(void*,void*,void*,void*,void*,void*)

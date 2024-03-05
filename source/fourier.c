@@ -11,7 +11,7 @@
  *
  */
 
-#include "thermodynamics.h"
+#include "fourier.h"
 
 /**
  * Return the P(k,z) for a given redshift z and pk type (_m, _cb)

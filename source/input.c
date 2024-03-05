@@ -1415,7 +1415,7 @@ int input_try_unknown_parameters(double * unknown_parameter,
     pr.thermo_Nz_log = 500;
     th.thermodynamics_verbose = 0;
     th.hyrec_verbose = 0;
-    class_call_except(thermodynamics_init(&pr,&ba,&pm,&fo,&th), th.error_message, errmsg, background_free(&ba);thermodynamics_free_input(&th);perturbations_free_input(&pt););
+    class_call_except(thermodynamics_init(&pr,&ba,&pm,&th), th.error_message, errmsg, background_free(&ba);thermodynamics_free_input(&th);perturbations_free_input(&pt););
   }
 
   if (pfzw->required_computation_stage >= cs_perturbations){
@@ -3921,7 +3921,7 @@ int input_prepare_pk_eq(struct precision * ppr,
     class_call(background_init(ppr,pba),
                pba->error_message,
                errmsg);
-    class_call(thermodynamics_init(ppr,pba,ppm,pfo,pth),
+    class_call(thermodynamics_init(ppr,pba,ppm,pth),
                pth->error_message,
                errmsg);
     delta_tau = pfo->pk_eq_tau[index_pk_eq_z] - pth->tau_rec;
@@ -3944,7 +3944,7 @@ int input_prepare_pk_eq(struct precision * ppr,
                                      &tau_of_z),
                  pba->error_message,
                  errmsg);
-      class_call(thermodynamics_init(ppr,pba,ppm,pfo,pth),
+      class_call(thermodynamics_init(ppr,pba,ppm,pth),
                  pth->error_message,
                  errmsg);
 

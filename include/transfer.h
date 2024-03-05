@@ -3,7 +3,7 @@
 #ifndef __TRANSFER__
 #define __TRANSFER__
 
-//#include "fourier.h"
+#include "fourier.h"
 #include "hyperspherical.h"
 #include "thermodynamics.h"
 #include <sys/shm.h>
