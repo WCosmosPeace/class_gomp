@@ -299,7 +299,7 @@ int thermodynamics_init(
                         struct precision * ppr,
                         struct background * pba,
                         struct primordial * ppm,
-                        //struct fourier * pfo,
+                        struct fourier * pfo,
                         struct thermodynamics * pth
                         ) {
 
@@ -403,7 +403,7 @@ int thermodynamics_init(
              pth->error_message);
 
   /** - solve recombination and reionization and store values of \f$ z, x_e, d \kappa / d \tau, T_b, c_b^2 \f$  */
-  class_call(thermodynamics_solve(ppr,pba,ppm,pth,ptw,pvecback),
+  class_call(thermodynamics_solve(ppr,pba,ppm,pfo,pth,ptw,pvecback),
              pth->error_message,
              pth->error_message);
 
@@ -1551,7 +1551,7 @@ int thermodynamics_solve(
                          struct precision * ppr,
                          struct background * pba,
                          struct primordial * ppm,
-                         //struct fourier * pfo,
+                         struct fourier * pfo,
                          struct thermodynamics * pth,
                          struct thermo_workspace * ptw,
                          double * pvecback
@@ -1592,7 +1592,7 @@ int thermodynamics_solve(
   /** - define the fields of the 'thermodynamics parameter and workspace' structure */
   tpaw.pba = pba;
   tpaw.ppm = ppm;
-  //tpaw.pfo = pfo;
+  tpaw.pfo = pfo;
   tpaw.ppr = ppr;
   tpaw.pth = pth;
   tpaw.pvecback = pvecback;
@@ -1641,7 +1641,7 @@ int thermodynamics_solve(
     class_call(thermodynamics_vector_init(ppr,
                                           pba,
                                           ppm,
-                                          //pfo,
+                                          pfo,
                                           pth,
                                           interval_limit[index_interval],
                                           ptw),
@@ -1945,7 +1945,7 @@ int thermodynamics_vector_init(
                                struct precision * ppr,
                                struct background * pba,
                                struct primordial * ppm,
-                               //struct fourier * pfo,
+                               struct fourier * pfo,
                                struct thermodynamics * pth,
                                double mz,
                                struct thermo_workspace * ptw
@@ -2077,7 +2077,7 @@ int thermodynamics_vector_init(
     ptdw->Tmat = ptdw->ptv->y[ptdw->ptv->index_ti_D_Tmat] + ptw->Tcmb*(1.+z);
 
     /* Obtain initial contents of new vector analytically, especially x_He */
-    class_call(thermodynamics_ionization_fractions(z,ptdw->ptv->y,pba,ppm,pth,ptw,ptdw->ap_current-1),
+    class_call(thermodynamics_ionization_fractions(z,ptdw->ptv->y,pba,ppm,pfo,pth,ptw,ptdw->ap_current-1),
                pth->error_message,
                pth->error_message);
 
@@ -2105,7 +2105,7 @@ int thermodynamics_vector_init(
     ptdw->Tmat = ptdw->ptv->y[ptdw->ptv->index_ti_D_Tmat] + ptw->Tcmb*(1.+z);
 
     /* Obtain initial contents of new vector analytically, especially x_H */
-    class_call(thermodynamics_ionization_fractions(z,ptdw->ptv->y,pba,ppm,pth,ptw,ptdw->ap_current-1),
+    class_call(thermodynamics_ionization_fractions(z,ptdw->ptv->y,pba,ppm,pfo,pth,ptw,ptdw->ap_current-1),
                pth->error_message,
                pth->error_message);
 
@@ -2216,7 +2216,7 @@ int thermodynamics_reionization_evolve_with_tau(
   struct precision * ppr;
   struct background * pba;
   struct primordial * ppm;
-  //struct fourier * pfo;
+  struct fourier * pfo;
   struct thermodynamics * pth;
   struct thermo_workspace * ptw;
 
@@ -2235,7 +2235,7 @@ int thermodynamics_reionization_evolve_with_tau(
   ppr = ptpaw->ppr;
   pba = ptpaw->pba;
   ppm = ptpaw->ppm;
-  //pfo = ptpaw->pfo;
+  pfo = ptpaw->pfo;
   pth = ptpaw->pth;
   ptw = ptpaw->ptw;
 
@@ -2299,6 +2299,11 @@ int thermodynamics_reionization_evolve_with_tau(
   ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift] = z_sup;
   /* maximum possible starting redshift */
   switch (pth->reio_parametrization) {
+  case reio_gomp:
+    /* try z_sup */
+    ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ppr->reionization_z_start_max;
+    //ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_sup;
+    break;
   case reio_camb:
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ppr->reionization_z_start_max;
     break;
@@ -2306,7 +2311,7 @@ int thermodynamics_reionization_evolve_with_tau(
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_sup;
     break;
   default:
-    class_stop(pth->error_message,"Should not be there: tau_reio acan be an input only for reio_camb and reio_half_tanh");
+    class_stop(pth->error_message,"Should not be there: tau_reio can be an input only for reio_camb, reio_gomp, and reio_half_tanh");
     break;
   }
 
@@ -2370,6 +2375,7 @@ int thermodynamics_reionization_evolve_with_tau(
     if (ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] < pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width) {
       ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width;
     }
+    //ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_inf;
 
   case reio_camb:
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ppr->reionization_start_factor*pth->reionization_width;
@@ -2432,6 +2438,7 @@ int thermodynamics_reionization_evolve_with_tau(
   counter=0;
   while ((tau_sup-tau_inf) > pth->tau_reio * ppr->reionization_optical_depth_tol) {
     z_mid=0.5*(z_sup+z_inf);
+    fprintf(stdout,"Left: tau_sup - tau_inf =%e and right: tau_reio * tolerance =%e\n",tau_sup-tau_inf,pth->tau_reio * ppr->reionization_optical_depth_tol);
 
     /* reionization redshift */
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift] = z_mid;
@@ -2441,7 +2448,9 @@ int thermodynamics_reionization_evolve_with_tau(
 
     case reio_gomp:
       ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = 20.;
-      /* if starting redshift for helium is larger, take that one
+      //ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift]+ppr->reionization_start_factor*pth->reionization_width;
+      //ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_mid;
+      /*if starting redshift for helium is larger, take that one
  *        *    (does not happen in realistic models) */
       if (ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] < pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width) {
         ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width;
@@ -2505,10 +2514,12 @@ int thermodynamics_reionization_evolve_with_tau(
     if (tau_mid > pth->tau_reio) {
       z_sup=z_mid;
       tau_sup=tau_mid;
+      fprintf(stdout,"The value of z_start=%e, z_sup=%e and tau_sup=%e\n",ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start],z_sup,tau_sup);
     }
     else {
       z_inf=z_mid;
       tau_inf=tau_mid;
+      fprintf(stdout,"The value of z_start=%e, z_inf=%e and tau_inf=%e\n",ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start],z_inf,tau_inf);
     }
 
     /* Restore initial conditions */
@@ -2527,6 +2538,7 @@ int thermodynamics_reionization_evolve_with_tau(
 
   /** - Store the ionization redshift in the thermodynamics structure */
   pth->z_reio = ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift];
+   
 
   /** - Free tempeoraty thermo vector */
   class_call(thermodynamics_vector_free(ptv),
@@ -2591,7 +2603,7 @@ int thermodynamics_derivs(
   struct precision * ppr;
   struct background * pba;
   struct primordial * ppm;
-  //struct fourier * pfo;
+  struct fourier * pfo;
   struct thermodynamics * pth;
   double * pvecback;
   struct thermo_workspace * ptw;
@@ -2614,7 +2626,7 @@ int thermodynamics_derivs(
   ppr = ptpaw->ppr;
   pba = ptpaw->pba;
   ppm = ptpaw->ppm;
-  //pfo = ptpaw->pfo;
+  pfo = ptpaw->pfo;
   pth = ptpaw->pth;
   pin = &(pth->in);
   /* vector of background quantities */
@@ -2665,7 +2677,7 @@ int thermodynamics_derivs(
       compute re-ionization effects on x_e; The output of this function
       is stored in the workspace ptdw */
 
-  class_call(thermodynamics_ionization_fractions(z,y,pba,ppm,pth,ptw,ap_current),
+  class_call(thermodynamics_ionization_fractions(z,y,pba,ppm,pfo,pth,ptw,ap_current),
              pth->error_message,
              error_message);
 
@@ -2964,7 +2976,7 @@ int thermodynamics_sources(
   struct thermodynamics_parameters_and_workspace * ptpaw;
   struct background * pba;
   struct primordial * ppm;
-  //struct fourier * pfo;
+  struct fourier * pfo;
   struct thermodynamics * pth;
   struct thermo_workspace * ptw;
   struct thermo_diffeq_workspace * ptdw;
@@ -2980,7 +2992,7 @@ int thermodynamics_sources(
   ptpaw = thermo_parameters_and_workspace;
   pba = ptpaw->pba;
   ppm = ptpaw->ppm;
-  //pfo = ptpaw->pfo;
+  pfo = ptpaw->pfo;
   pth = ptpaw->pth;
   /* Thermo workspace & vector */
   ptw = ptpaw->ptw;
@@ -3023,7 +3035,7 @@ int thermodynamics_sources(
   /* Smoothing if we are shortly after an approximation switch, i.e. if z is within 2 delta after the switch*/
   if ((ap_current != 0) && (z > ptdw->ap_z_limits[ap_current-1]-2*ptdw->ap_z_limits_delta[ap_current])) {
 
-    class_call(thermodynamics_ionization_fractions(z,y,pba,ppm,pth,ptw,ap_current-1),
+    class_call(thermodynamics_ionization_fractions(z,y,pba,ppm,pfo,pth,ptw,ap_current-1),
                pth->error_message,
                error_message);
 
@@ -4007,7 +4019,7 @@ int thermodynamics_ionization_fractions(
                                         double * y,
                                         struct background * pba,
                                         struct primordial * ppm,
-                                       // struct fourier * pfo,
+                                        struct fourier * pfo,
                                         struct thermodynamics * pth,
                                         struct thermo_workspace * ptw,
                                         int current_ap
@@ -4166,7 +4178,7 @@ int thermodynamics_ionization_fractions(
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_xe_before] = x;
 
     /* compute x */
-    class_call(thermodynamics_reionization_function(z,pba,ppm,pth,ptw->ptrp,&x),
+    class_call(thermodynamics_reionization_function(z,pba,ppm,pfo,pth,ptw->ptrp,&x),
                pth->error_message,
                pth->error_message);
   }
@@ -4189,7 +4201,7 @@ int thermodynamics_reionization_function(
                                          double z,
                                          struct background * pba,
                                          struct primordial * ppm,
-                                         //struct fourier * pfo,
+                                         struct fourier * pfo,
                                          struct thermodynamics * pth,
                                          struct thermo_reionization_parameters * preio,
                                          double * x
@@ -4209,6 +4221,7 @@ int thermodynamics_reionization_function(
   double scale;
   double xHI;
   double temp;
+  double poly;
 
   int jump;
   double center,before, after,width,one_jump;
@@ -4216,7 +4229,7 @@ int thermodynamics_reionization_function(
   double p_testa;
   double p_te;
   double p_tro;
-  double p_so;
+  double* p_so;
 
   switch (pth->reio_parametrization) {
 
@@ -4224,14 +4237,16 @@ int thermodynamics_reionization_function(
   case reio_none:
     *x = preio->reionization_parameters[preio->index_re_xe_before];
     break;
-
+ 
   /** add the gromp curve here */
   case reio_gomp:
   // testing sigma8 and others
   //p_testa = pba->h;
   //p_te = pba->Omega0_b;
   //p_tro = ppm->n_s;
- // p_so = pth->sigma8;
+  //p_so = pth->sigma8;
+  p_so = pfo->sigma8;
+  double ss = *p_so;
   //fprintf(stdout,"The value of h is %e, ns=%e, sigma8=%e, and Ob is %e hopefully.",p_testa,p_tro,p_so,p_te);
 //  still need the case z > z_reio_start 
   if (z > preio->reionization_parameters[preio->index_re_reio_start]) {
@@ -4241,13 +4256,16 @@ int thermodynamics_reionization_function(
 //  start the hydrogen reionization contribution
 //  
   scale = 1./(1. + z);
-  tilt = 6.747937;
-  temp = pow(ppm->n_s,-0.09160705/pba->Omega0_b);
-  pivot = (pba->Omega0_b/(pba->h - pow(pba->Omega0_b,pth->sigma8)))/pth->sigma8 - pth->sigma8 - pba->Omega0_cdm*(pba->h + 0.5900404)
-          - pow(ppm->n_s,temp/pba->h);
-  ar = exp((log(scale) - pivot) * tilt);
-  /** finally gompertz curve */
-  xHI = exp(-exp(log(ar) + 0.11944468 * exp(ar)));
+  tilt = 8.331045;
+  if (pth->reio_z_or_tau == reio_z) {
+    pivot = (-1.0389123 - ss)*(((pba->Omega0_cdm*pba->h) - pba->Omega0_b) + ppm->n_s);
+  }
+  else {
+    pivot = log(1./(1. + preio->reionization_parameters[preio->index_re_reio_redshift]));
+  }
+  temp = (log(scale) - pivot)*tilt;
+  poly = temp + 0.15034337*pow(temp,2) + 0.04849586*pow(temp,3) + 0.00526138*pow(temp,4) + 0.0002182*pow(temp,5);
+  xHI = exp(-exp(poly));
   *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before])
        *(1. - xHI)
        +preio->reionization_parameters[preio->index_re_xe_before]; 

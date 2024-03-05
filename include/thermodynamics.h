@@ -4,8 +4,8 @@
 #define __THERMODYNAMICS__
 
 #include "background.h"
-//#include "fourier.h"
-#include "primordial.h"
+#include "fourier.h"
+//#include "primordial.h"
 #include "evolver_ndf15.h"
 #include "evolver_rkck.h"
 #include "wrap_hyrec.h"
@@ -493,7 +493,7 @@ struct thermodynamics_parameters_and_workspace {
   /* structures containing fixed input parameters (indices, ...) */
   struct background * pba;
   struct primordial * ppm;
-  //struct fourier * pfo;
+  struct fourier * pfo;
   struct precision * ppr;
   struct thermodynamics * pth;
 
@@ -524,7 +524,7 @@ extern "C" {
   int thermodynamics_init(struct precision * ppr,
                           struct background * pba,
                           struct primordial * ppm,
-                          //struct fourier * pfo,
+                          struct fourier * pfo,
                           struct thermodynamics * pth);
 
   int thermodynamics_free(struct thermodynamics * pth);
@@ -563,7 +563,7 @@ extern "C" {
   int thermodynamics_solve(struct precision * ppr,
                            struct background * pba,
                            struct primordial * ppm,
-                           //struct fourier * pfo,
+                           struct fourier * pfo,
                            struct thermodynamics * pth,
                            struct thermo_workspace* ptw,
                            double * pvecback);
@@ -581,7 +581,7 @@ extern "C" {
   int thermodynamics_vector_init(struct precision * ppr,
                                  struct background * pba,
                                  struct primordial * ppm,
-                                 //struct fourier * pfo,
+                                 struct fourier * pfo,
                                  struct thermodynamics * pth,
                                  double z,
                                  struct thermo_workspace * ptw);
@@ -646,7 +646,7 @@ extern "C" {
                                           double * y,
                                           struct background * pba,
                                           struct primordial * ppm,
-                                          //struct fourier * pfo, 
+                                          struct fourier * pfo, 
                                           struct thermodynamics * pth,
                                           struct thermo_workspace * ptw,
                                           int current_ap
@@ -655,7 +655,7 @@ extern "C" {
   int thermodynamics_reionization_function(double z,
                                            struct background * pba,
                                            struct primordial * ppm,
-                                           //struct fourier * pfo,
+                                           struct fourier * pfo,
                                            struct thermodynamics * pth,
                                            struct thermo_reionization_parameters * preio,
                                            double * x);
