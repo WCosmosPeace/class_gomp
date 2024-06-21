@@ -18,7 +18,7 @@ vpath .base build
 ########################################################
 
 # your C compiler:
-CC       = gcc
+CC       = /usr/local/bin/gcc-14
 #CC       = icc
 #CC       = pgcc
 
@@ -30,20 +30,22 @@ AR        = ar rv
 # substitute python3 to python in the line below, or you can simply
 # add a compilation option on the terminal command line:
 # "PYTHON=python3 make all" (Thanks to Marius Millea for python3 compatibility)
-PYTHON ?= python
+PYTHON = /opt/anaconda3/envs/cobaya/bin/python
 
 # your optimization flag
-OPTFLAG = -O3
+OPTFLAG = -O4 -ffast-math
 #OPTFLAG = -Ofast -ffast-math #-march=native
 #OPTFLAG = -fast
 
 # your openmp flag (comment for compiling without openmp)
-OMPFLAG   = -fopenmp
+#OMPFLAG   = -fopenmp
 #OMPFLAG   = -mp -mp=nonuma -mp=allcores -g
 #OMPFLAG   = -openmp
 
 # all other compilation flags
 CCFLAG = -g -fPIC
+#CCFLAG = -g -fPIC -mmacos-version-min=10.15
+#CCFLAG = -g -fPIC -D__has_cpp_attribute=0
 LDFLAG = -g -fPIC
 
 # leave blank to compile without HyRec, or put path to HyRec directory

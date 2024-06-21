@@ -7,6 +7,7 @@
 
 #include "input.h"
 
+
 /* The input module fills variables belonging to the structures of
    essentially all other modules. Thus we need to include all the
    headers. New in v3.0: These #include fit better here than in
@@ -794,8 +795,6 @@ int input_shooting(struct file_content * pfc,
 
     /* store name of target parameter */
     if (flag1 == _TRUE_) {
-      // P: need hack to get sigma8 to thermodynamics 
-      pth->sigma8 = param1;
       fzw.target_name[0] = sigma8;
       fzw.target_value[0] = param1;
     }
@@ -2185,8 +2184,11 @@ int input_read_parameters_general(struct file_content * pfc,
     if (strcmp(string1,"reio_none") == 0){
       pth->reio_parametrization = reio_none;
     }
-    else if (strcmp(string1,"reio_gomp") == 0){
-      pth->reio_parametrization = reio_gomp;
+    else if (strcmp(string1,"reio_gomp1") == 0){
+      pth->reio_parametrization = reio_gomp1;
+    }
+    else if (strcmp(string1,"reio_gomp2") == 0){
+      pth->reio_parametrization = reio_gomp2;
     }
     else if (strcmp(string1,"reio_camb") == 0){
       pth->reio_parametrization = reio_camb;
@@ -2205,7 +2207,7 @@ int input_read_parameters_general(struct file_content * pfc,
     }
     else{
       class_stop(errmsg,
-                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_gomp','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
+                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_gomp1','reio_gomp2','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
     }
   }
 
@@ -2216,7 +2218,38 @@ int input_read_parameters_general(struct file_content * pfc,
     break;
 
     /** 8.a) Reionization parameters if reio_parametrization=reio_camb */
-  case reio_gomp:
+  case reio_gomp1:
+  case reio_gomp2:
+    /* Read we need to add the zt */
+    class_call(parser_read_double(pfc,"z_reio",&param1,&flag1,errmsg),
+                     errmsg,
+                     errmsg);
+    class_call(parser_read_double(pfc,"tau_reio",&param2,&flag2,errmsg),
+                     errmsg,
+                     errmsg);
+    class_read_double("reionization_exponent",pth->reionization_exponent);
+    class_read_double("reionization_width",pth->reionization_width);
+    class_read_double("helium_fullreio_redshift",pth->helium_fullreio_redshift);
+    class_read_double("helium_fullreio_width",pth->helium_fullreio_width);
+    /* reading the ionization efficiency */
+    class_read_double("zt",pth->zt);
+    class_read_double("sigma8",pth->sigma8);
+    /* Test */
+    class_test(((flag1 == _TRUE_) && (flag2 == _TRUE_)),
+                     errmsg,
+                     "You can only enter one of 'z_reio' or 'tau_reio'.");
+    /* Complete set of parameters */
+    if (flag1 == _TRUE_){
+      pth->z_reio=param1;
+      pth->reio_z_or_tau=reio_z;
+    }
+    if (flag2 == _TRUE_){
+      pth->tau_reio=param2;
+      pth->reio_z_or_tau=reio_tau;
+    }
+    break;
+          
+          
   case reio_camb:
   case reio_half_tanh:
     /* Read */

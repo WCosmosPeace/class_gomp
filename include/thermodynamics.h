@@ -27,7 +27,8 @@ enum recombination_algorithm {
 
 enum reionization_parametrization {
                                    reio_none,       /**< no reionization */
-                                   reio_gomp,       /**< reionization parametrized with gomp */
+                                   reio_gomp1,       /**< reionization parametrized with gomp full */
+                                   reio_gomp2,      /**< reionization parametrized with gomp half */
                                    reio_camb,       /**< reionization parameterized like in CAMB */
                                    reio_bins_tanh,  /**< binned reionization history with tanh inteprolation between bins */
                                    reio_half_tanh,  /**< half a tanh, instead of the full tanh */
@@ -80,6 +81,8 @@ struct thermodynamics
   double tau_reio; /**< if above set to tau, input value of reionization optical depth */
 
   double z_reio;   /**< if above set to z,   input value of reionization redshift */
+    
+  double zt;       /**< ionization efficiency for gompertz curves */
 
   short compute_cb2_derivatives; /**< do we want to include in computation derivatives of baryon sound speed? */
 
