@@ -4298,15 +4298,19 @@ int thermodynamics_reionization_function(
   if (pth->reio_z_or_tau == reio_z) {
     if (pth->reio_parametrization == reio_gomp1) {
       // SR gomp1 comp19 (pivot) comp15 (tilt)
-      pivot = (pow((85.08853 * pba->Omega0_b / pth->zt - pba->Omega0_b),pba->h) - ppm->n_s - pth->sigma8 / ppm->n_s) * (ppm->n_s + pba->Omega0_m);
+//      pivot = (pow((85.08853 * pba->Omega0_b / pth->zt - pba->Omega0_b),pba->h) - ppm->n_s - pth->sigma8 / ppm->n_s) * (ppm->n_s + pba->Omega0_m);
+      // SR gomp1 trained on core + edge comp22 (pivot) comp 25 (tilt)
+      pivot = ((((ppm->n_s - (log(0.11230898 * pth->zt) * -0.35580978)) * (0.048352774 - pth->sigma8)) - (pba->Omega0_m + ppm->n_s)) + (pow((pba->Omega0_b / pba->Omega0_m),pba->h)));
         if (pth->sigma8 == 0) {
-            fprintf(stdout,"Code does not support the A_s and z_re as inputs (together) \n");
+            fprintf(stdout,"WARNING: Code does not support the A_s and z_re as inputs (together) \n");
             // prevents the crash but is not accurate and combine with the pivot
             // will likely give unphysical results
-            tilt = log(1. / (0.8159) * pow((3.9115524 * pba->Omega0_m / pba->Omega0_b),(log(pth->zt) - pba->h - pba->Omega0_m)) );
+//            tilt = log(1. / (0.8159) * pow((3.9115524 * pba->Omega0_m / pba->Omega0_b),(log(pth->zt) - pba->h - pba->Omega0_m)) );
+            tilt = ((log(pba->Omega0_b) * (((pow(0.005659511,pba->Omega0_m)) / 0.601493) - (log(pth->zt - (pow((pba->Omega0_m + (ppm->n_s * pba->h)),15.051933))) - pba->h))) + (pba->h / (0.8159)));
         }
         else{
-            tilt = log(1. / pth->sigma8 * pow((3.9115524 * pba->Omega0_m / pba->Omega0_b),(log(pth->zt) - pba->h - pba->Omega0_m)) );
+//            tilt = log(1. / pth->sigma8 * pow((3.9115524 * pba->Omega0_m / pba->Omega0_b),(log(pth->zt) - pba->h - pba->Omega0_m)) );
+            tilt =  ((log(pba->Omega0_b) * (((pow(0.005659511,pba->Omega0_m)) / 0.601493) - (log(pth->zt - (pow((pba->Omega0_m + (ppm->n_s * pba->h)),15.051933))) - pba->h))) + (pba->h / pth->sigma8));
         }
     }
     if (pth->reio_parametrization == reio_gomp2) {
@@ -4338,12 +4342,14 @@ int thermodynamics_reionization_function(
   }
   else {
     tilt = 7.63;
+//    tilt = 10.5;
 //    tilt = 8.33;
     pivot = log(1./(1. + preio->reionization_parameters[preio->index_re_reio_redshift]));
   }
   temp = (log(scale) - pivot)*tilt;
 //  poly = temp + 0.15034337*pow(temp,2) + 0.04849586*pow(temp,3) + 0.00526138*pow(temp,4) + 0.0002182*pow(temp,5);
-  poly = temp + 0.109881282*pow(temp,2) + 0.0245923405*pow(temp,3) + 0.000280982197*pow(temp,4) - 7.76864358e-05*pow(temp,5);
+//  poly = temp + 0.109881282*pow(temp,2) + 0.0245923405*pow(temp,3) + 0.000280982197*pow(temp,4) - 7.76864358e-05*pow(temp,5);
+  poly = temp + 1.12988593e-01*pow(temp,2) + 2.59887121e-02*pow(temp,3) + 5.49059964e-04*pow(temp,4) - 6.51788022e-05*pow(temp,5); // edge + core poly6
   xHI = exp(-exp(poly));
   *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before])
        *(1. - xHI)
