@@ -4341,7 +4341,7 @@ int thermodynamics_reionization_function(
 //    pivot = (pow(pba->h,pba->Omega0_m) + pth->sigma8) * (pba->Omega0_b - (ppm->n_s + pba->Omega0_m));
   }
   else {
-    tilt = 7.63;
+    tilt = 7.66;
 //    tilt = 10.5;
 //    tilt = 8.33;
     pivot = log(1./(1. + preio->reionization_parameters[preio->index_re_reio_redshift]));
