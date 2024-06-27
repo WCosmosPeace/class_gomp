@@ -18,7 +18,7 @@ vpath .base build
 ########################################################
 
 # your C compiler:
-CC       = /usr/local/bin/gcc-14
+CC       = gcc
 #CC       = icc
 #CC       = pgcc
 
@@ -30,7 +30,7 @@ AR        = ar rv
 # substitute python3 to python in the line below, or you can simply
 # add a compilation option on the terminal command line:
 # "PYTHON=python3 make all" (Thanks to Marius Millea for python3 compatibility)
-PYTHON = /opt/anaconda3/envs/cobaya/bin/python
+PYTHON ?= python
 
 # your optimization flag
 OPTFLAG = -O4 -ffast-math
