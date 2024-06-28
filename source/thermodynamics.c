@@ -4315,16 +4315,19 @@ int thermodynamics_reionization_function(
     }
     if (pth->reio_parametrization == reio_gomp2) {
         // SR gomp2 comp22 (pivot) comp10 (tilt)
-        tilt = pow((log(pth->zt) + pba->Omega0_m / pba->h), pow(pba->Omega0_b, -0.1410175));
+//        tilt = pow((log(pth->zt) + pba->Omega0_m / pba->h), pow(pba->Omega0_b, -0.1410175));
+        // SR gomp2 trained on core + edge comp22 (pivot) comp 11 (tilt)
+        tilt = (pow(((pth->zt - (pow(pba->Omega0_m,-1.583228))) / (pba->Omega0_b * pba->h)),0.31627414));
         
         if (pth->sigma8 == 0) {
           fprintf(stdout,"Code does not support the A_s and z_re as inputs (together) \n");
           // see previous comment in reio_gomp1
-          pivot = log(0.33022612 / (0.8159) * pow(pba->Omega0_m, -0.50538677) * pow(((pth->zt + pow((0.8159), 0.41064402) / pba->Omega0_b) * pow(pba->h,0.7619934)), -0.50538677 * ppm->n_s));
+//          pivot = log(0.33022612 / (0.8159) * pow(pba->Omega0_m, -0.50538677) * pow(((pth->zt + pow((0.8159), 0.41064402) / pba->Omega0_b) * pow(pba->h,0.7619934)), -0.50538677 * ppm->n_s));
             
         }
         else {
-          pivot = log(0.33022612 / pth->sigma8 * pow(pba->Omega0_m, -0.50538677) * pow(((pth->zt + pow(pth->sigma8, 0.41064402) / pba->Omega0_b) * pow(pba->h,0.7619934)), -0.50538677 * ppm->n_s));
+//          pivot = log(0.33022612 / pth->sigma8 * pow(pba->Omega0_m, -0.50538677) * pow(((pth->zt + pow(pth->sigma8, 0.41064402) / pba->Omega0_b) * pow(pba->h,0.7619934)), -0.50538677 * ppm->n_s));
+            pivot = ((( pow((pba->Omega0_b / pba->Omega0_m),pba->Omega0_m)) - (pow(log( ( pow((pth->zt + (pow(pba->Omega0_b,-0.49822742))),pth->sigma8)) * pba->h),0.5721157))) - (pow(ppm->n_s,1.8340757)));
         }
           
           
