@@ -27,6 +27,8 @@ enum recombination_algorithm {
 
 enum reionization_parametrization {
                                    reio_none,       /**< no reionization */
+                                   reio_robustgomp1,  /**< Robust gomp SRFull */
+                                   reio_robustgomp2,  /**< Robust gomp SRHalf */
                                    reio_gomp1,       /**< reionization parametrized with gomp full */
                                    reio_gomp2,      /**< reionization parametrized with gomp half */
                                    reio_camb,       /**< reionization parameterized like in CAMB */
@@ -83,6 +85,10 @@ struct thermodynamics
   double z_reio;   /**< if above set to z,   input value of reionization redshift */
     
   double zt;       /**< ionization efficiency for gompertz curves */
+    
+  double Tv;       /**< virial temperature for robust gompertz curves */
+    
+  double LX;       /**< X-ray luminosity for robust gompertz curves */
 
   short compute_cb2_derivatives; /**< do we want to include in computation derivatives of baryon sound speed? */
 

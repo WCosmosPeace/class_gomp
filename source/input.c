@@ -2190,6 +2190,12 @@ int input_read_parameters_general(struct file_content * pfc,
     else if (strcmp(string1,"reio_gomp2") == 0){
       pth->reio_parametrization = reio_gomp2;
     }
+    else if (strcmp(string1,"reio_robustgomp1") == 0){
+      pth->reio_parametrization = reio_robustgomp1;
+    }
+    else if (strcmp(string1,"reio_robustgomp2") == 0){
+      pth->reio_parametrization = reio_robustgomp2;
+    }
     else if (strcmp(string1,"reio_camb") == 0){
       pth->reio_parametrization = reio_camb;
     }
@@ -2207,7 +2213,7 @@ int input_read_parameters_general(struct file_content * pfc,
     }
     else{
       class_stop(errmsg,
-                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_gomp1','reio_gomp2','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
+                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_gomp1','reio_gomp2','reio_robustgomp1', 'reio_robustgomp2','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
     }
   }
 
@@ -2248,7 +2254,41 @@ int input_read_parameters_general(struct file_content * pfc,
       pth->reio_z_or_tau=reio_tau;
     }
     break;
-          
+
+  case reio_robustgomp1:
+  case reio_robustgomp2:
+    /* Read we need to add the zt */
+    class_call(parser_read_double(pfc,"z_reio",&param1,&flag1,errmsg),
+                     errmsg,
+                     errmsg);
+    class_call(parser_read_double(pfc,"tau_reio",&param2,&flag2,errmsg),
+                     errmsg,
+                     errmsg);
+    class_read_double("reionization_exponent",pth->reionization_exponent);
+    class_read_double("reionization_width",pth->reionization_width);
+    class_read_double("helium_fullreio_redshift",pth->helium_fullreio_redshift);
+    class_read_double("helium_fullreio_width",pth->helium_fullreio_width);
+    /* reading the ionization efficiency */
+    class_read_double("zt",pth->zt);
+    /* reading virial temperature */
+    class_read_double("Tv",pth->Tv);
+    /* reading X-ray luminosity */
+    class_read_double("LX",pth->LX);
+    class_read_double("sigma8",pth->sigma8);
+    /* Test */
+    class_test(((flag1 == _TRUE_) && (flag2 == _TRUE_)),
+                     errmsg,
+                     "You can only enter one of 'z_reio' or 'tau_reio'.");
+    /* Complete set of parameters */
+    if (flag1 == _TRUE_){
+      pth->z_reio=param1;
+      pth->reio_z_or_tau=reio_z;
+    }
+    if (flag2 == _TRUE_){
+      pth->tau_reio=param2;
+      pth->reio_z_or_tau=reio_tau;
+    }
+    break;
           
   case reio_camb:
   case reio_half_tanh:
