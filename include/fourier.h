@@ -193,6 +193,8 @@ struct fourier {
 
   ErrorMsg error_message; 	/**< zone for writing error messages */
 
+  short is_allocated; /**< flag is set to true if allocated */
+
   //@}
 };
 
@@ -355,6 +357,7 @@ extern "C" {
 
   int fourier_get_k_list(
                          struct precision *ppr,
+			 struct primordial *ppm,
                          struct perturbations * ppt,
                          struct fourier * pfo
                          );
