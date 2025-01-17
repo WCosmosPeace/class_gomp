@@ -2194,6 +2194,9 @@ int input_read_parameters_general(struct file_content * pfc,
     else if (strcmp(string1,"reio_robustgomp2") == 0){
       pth->reio_parametrization = reio_robustgomp2;
     }
+    else if (strcmp(string1,"reio_gomp_noSR") == 0){
+      pth->reio_parametrization = reio_gomp_noSR;
+    }
     else if (strcmp(string1,"reio_camb") == 0){
       pth->reio_parametrization = reio_camb;
     }
@@ -2211,7 +2214,7 @@ int input_read_parameters_general(struct file_content * pfc,
     }
     else{
       class_stop(errmsg,
-                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_gomp1','reio_gomp2','reio_robustgomp1', 'reio_robustgomp2','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
+                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_gomp1','reio_gomp2','reio_robustgomp1','reio_robustgomp2','reio_gomp_noSR','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
     }
   }
 
@@ -2278,6 +2281,38 @@ int input_read_parameters_general(struct file_content * pfc,
                      errmsg,
                      "You can only enter one of 'z_reio' or 'tau_reio'.");
     /* Complete set of parameters */
+    if (flag1 == _TRUE_){
+      pth->z_reio=param1;
+      pth->reio_z_or_tau=reio_z;
+    }
+    if (flag2 == _TRUE_){
+      pth->tau_reio=param2;
+      pth->reio_z_or_tau=reio_tau;
+    }
+    break;
+
+  case reio_gomp_noSR:
+    /* Read we need to add pivot and tilt */
+    class_call(parser_read_double(pfc,"z_reio",&param1,&flag1,errmsg),
+                     errmsg,
+                     errmsg);
+    class_call(parser_read_double(pfc,"tau_reio",&param2,&flag2,errmsg),
+                     errmsg,
+                     errmsg);
+    class_read_double("reionization_exponent",pth->reionization_exponent);
+    class_read_double("reionization_width",pth->reionization_width);
+    class_read_double("helium_fullreio_redshift",pth->helium_fullreio_redshift);
+    class_read_double("helium_fullreio_width",pth->helium_fullreio_width);
+    /* reading alpha_gomp the pivot parameter of the universality */
+    class_read_double("alpha_gomp",pth->alpha_gomp);
+    /* reading beta_gomp the tilt parameter of the universailty */
+    class_read_double("beta_gomp",pth->beta_gomp);
+    /* Test */
+    class_test(((flag1 == _TRUE_) && (flag2 == _TRUE_)),
+                     errmsg,
+                     "You can only enter one of 'z_reio' or 'tau_reio'.");
+    /* Complete set of parameters */
+    /* Here we are still using z_reio as placeholder for the reio start */
     if (flag1 == _TRUE_){
       pth->z_reio=param1;
       pth->reio_z_or_tau=reio_z;

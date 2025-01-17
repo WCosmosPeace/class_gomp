@@ -479,6 +479,7 @@ int thermodynamics_free_input(
   case reio_robustgomp2:
   case reio_gomp1:
   case reio_gomp2:
+  case reio_gomp_noSR:	  
   case reio_camb:
   case reio_half_tanh:
   default:
@@ -1047,6 +1048,7 @@ int thermodynamics_indices(
     break;
   case reio_gomp1:
   case reio_gomp2:
+  case reio_gomp_noSR:
     /* adding the ionization efficiency */
 //    class_define_index(ptrp->index_re_zt,_TRUE_,index_re,1);
     class_define_index(ptrp->index_re_reio_redshift,_TRUE_,index_re,1);
@@ -1228,6 +1230,7 @@ int thermodynamics_set_parameters_reionization(
   case reio_robustgomp2:
   case reio_gomp1:
   case reio_gomp2:
+  case reio_gomp_noSR:
   case reio_camb:
   case reio_half_tanh:
 
@@ -1236,6 +1239,9 @@ int thermodynamics_set_parameters_reionization(
       preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
     }
     if (pth->reio_parametrization == reio_robustgomp2) {
+      preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
+    }
+    if (pth->reio_parametrization == reio_gomp_noSR) {
       preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
     }
     if (pth->reio_parametrization == reio_gomp1) {
@@ -1291,7 +1297,9 @@ int thermodynamics_set_parameters_reionization(
       if (pth->reio_parametrization == reio_robustgomp2) {
         preio->reionization_parameters[preio->index_re_reio_start] = preio->reionization_parameters[preio->index_re_reio_redshift];
       }
-
+      if (pth->reio_parametrization == reio_gomp_noSR) {
+        preio->reionization_parameters[preio->index_re_reio_start] = preio->reionization_parameters[preio->index_re_reio_redshift];
+      }
       if (pth->reio_parametrization == reio_gomp1) {
         preio->reionization_parameters[preio->index_re_reio_start] = preio->reionization_parameters[preio->index_re_reio_redshift];
         // can also hardcode to large value, say 20
@@ -1904,6 +1912,7 @@ int thermodynamics_output_summary(
   case reio_robustgomp2:
   case reio_gomp1:
   case reio_gomp2:
+  case reio_gomp_noSR:
   case reio_camb:
   case reio_half_tanh:
     switch (pth->reio_z_or_tau) {
@@ -2365,6 +2374,7 @@ int thermodynamics_reionization_evolve_with_tau(
   case reio_robustgomp2:
   case reio_gomp1:
   case reio_gomp2:
+  case reio_gomp_noSR:
     /* try z_sup */
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ppr->reionization_z_start_max;
     //ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_sup;
@@ -2376,7 +2386,7 @@ int thermodynamics_reionization_evolve_with_tau(
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_sup;
     break;
   default:
-    class_stop(pth->error_message,"Should not be there: tau_reio can be an input only for reio_camb, reio_gomp1, reio_gomp2, reio_robustgomp1, reio_robustgomp2, and reio_half_tanh");
+    class_stop(pth->error_message,"Should not be there: tau_reio can be an input only for reio_camb, reio_gomp1, reio_gomp2, reio_robustgomp1, reio_robustgomp2, reio_gomp_noSR, and reio_half_tanh");
     break;
   }
 
@@ -2438,6 +2448,7 @@ int thermodynamics_reionization_evolve_with_tau(
   case reio_robustgomp2:
   case reio_gomp1:
   case reio_gomp2:
+  case reio_gomp_noSR:
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ppr->reionization_start_factor*pth->reionization_width;
     if (ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] < pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width) {
       ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = pth->helium_fullreio_redshift+ppr->reionization_start_factor*pth->helium_fullreio_width;
@@ -2517,6 +2528,7 @@ int thermodynamics_reionization_evolve_with_tau(
     case reio_robustgomp2:
     case reio_gomp1:
     case reio_gomp2:
+    case reio_gomp_noSR:
       ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = 20.;
       //ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift]+ppr->reionization_start_factor*pth->reionization_width;
       //ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_mid;
@@ -4312,14 +4324,41 @@ int thermodynamics_reionization_function(
     *x = preio->reionization_parameters[preio->index_re_xe_before];
     break;
 
+  /** add free gomp curve */
+  case reio_gomp_noSR:
+  if (z > preio->reionization_parameters[preio->index_re_reio_start]) {
+    *x = preio->reionization_parameters[preio->index_re_xe_before];
+  }
+  else {
+      // start the HI reionization contribution
+      scale = 1./(1. + z);
+      if (pth->reio_z_or_tau == reio_z) {
+        pivot = pth->alpha_gomp;
+	tilt = pth->beta_gomp;
+      }
+      else {
+        tilt = 7.49;
+        pivot = log(1./(1. + preio->reionization_parameters[preio->index_re_reio_redshift]));
+      }
+      temp = (log(scale) - pivot)*tilt;
+      poly = temp + 1.25218906e-01*pow(temp,2) + 3.53290242e-02*pow(temp,3) + 2.20265427e-03*pow(temp,4) + 7.48303918e-06*pow(temp,5);
+      xHI = exp(-exp(poly));
+      *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before]) * (1. - xHI) + preio->reionization_parameters[preio->index_re_xe_before];
+      // case z < z_reio_start: helium contribution -- second reio -- (tanh of simpler argument)
+      argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z) / preio->reionization_parameters[preio->index_re_helium_fullreio_width];
+      *x += preio->reionization_parameters[preio->index_re_helium_fullreio_fraction] * (tanh(argument)+1.)/2.;
+  }
+  break;
+
+
   /** add robust gomp curves */
   case reio_robustgomp1:
   case reio_robustgomp2:
   // testing the new inputs
-  p_so = pth->sigma8;
-  p_zt = pth->zt;
-  p_Tv = pth->Tv;
-  p_LX = pth->LX;
+  //p_so = pth->sigma8;
+  //p_zt = pth->zt;
+  //p_Tv = pth->Tv;
+  //p_LX = pth->LX;
 //  fprintf(stdout, "Values of sigma8=%e, zt=%e, Tv=%e, and LX=%e",p_so,p_zt,p_Tv,p_LX);
   // if z > z_reio_start then
   if (z > preio->reionization_parameters[preio->index_re_reio_start]) {
@@ -4377,7 +4416,7 @@ int thermodynamics_reionization_function(
   //p_testa = pba->h;
   //p_te = pba->Omega0_b;
   //p_tro = ppm->n_s;
-  p_so = pth->sigma8;
+  //p_so = pth->sigma8;
 //  p_zt = pth->zt;
 //  p_te = pba->Omega0_m;
   //p_so = pfo->sigma8;

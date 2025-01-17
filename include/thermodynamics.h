@@ -31,6 +31,7 @@ enum reionization_parametrization {
                                    reio_robustgomp2,  /**< Robust gomp SRHalf */
                                    reio_gomp1,       /**< reionization parametrized with gomp full */
                                    reio_gomp2,      /**< reionization parametrized with gomp half */
+				   reio_gomp_noSR,  /**< reionization with gomp but with no SR just universality */
                                    reio_camb,       /**< reionization parameterized like in CAMB */
                                    reio_bins_tanh,  /**< binned reionization history with tanh inteprolation between bins */
                                    reio_half_tanh,  /**< half a tanh, instead of the full tanh */
@@ -89,6 +90,10 @@ struct thermodynamics
   double Tv;       /**< virial temperature for robust gompertz curves */
     
   double LX;       /**< X-ray luminosity for robust gompertz curves */
+
+  double alpha_gomp; /**< power-law pivot of the gomp rescaling */
+
+  double beta_gomp; /**< rescaling tilt of the gomp mapping */
 
   short compute_cb2_derivatives; /**< do we want to include in computation derivatives of baryon sound speed? */
 
