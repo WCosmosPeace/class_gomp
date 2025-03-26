@@ -32,6 +32,7 @@ enum reionization_parametrization {
                                    reio_gomp1,       /**< reionization parametrized with gomp full */
                                    reio_gomp2,      /**< reionization parametrized with gomp half */
 				   reio_gomp_noSR,  /**< reionization with gomp but with no SR just universality */
+				   reio_gompWDM,    /**< Robust gomp with WDM */
                                    reio_camb,       /**< reionization parameterized like in CAMB */
                                    reio_bins_tanh,  /**< binned reionization history with tanh inteprolation between bins */
                                    reio_half_tanh,  /**< half a tanh, instead of the full tanh */

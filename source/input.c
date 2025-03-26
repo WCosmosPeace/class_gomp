@@ -2197,6 +2197,9 @@ int input_read_parameters_general(struct file_content * pfc,
     else if (strcmp(string1,"reio_gomp_noSR") == 0){
       pth->reio_parametrization = reio_gomp_noSR;
     }
+    else if (strcmp(string1,"reio_gompWDM") == 0){
+      pth->reio_parametrization = reio_gompWDM;
+    }
     else if (strcmp(string1,"reio_camb") == 0){
       pth->reio_parametrization = reio_camb;
     }
@@ -2214,7 +2217,7 @@ int input_read_parameters_general(struct file_content * pfc,
     }
     else{
       class_stop(errmsg,
-                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_gomp1','reio_gomp2','reio_robustgomp1','reio_robustgomp2','reio_gomp_noSR','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
+                 "You specified 'reio_parametrization' as '%s'. It has to be one of {'reio_none','reio_gomp1','reio_gomp2','reio_robustgomp1','reio_robustgomp2','reio_gomp_noSR', 'reio_gompWDM','reio_camb','reio_bins_tanh','reio_half_tanh','reio_many_tanh','reio_inter'}.",string1);
     }
   }
 
@@ -2258,7 +2261,8 @@ int input_read_parameters_general(struct file_content * pfc,
 
   case reio_robustgomp1:
   case reio_robustgomp2:
-    /* Read we need to add the zt */
+  case reio_gompWDM:
+    /* Read we need to add the zt, Tv, LX */
     class_call(parser_read_double(pfc,"z_reio",&param1,&flag1,errmsg),
                      errmsg,
                      errmsg);
