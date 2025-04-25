@@ -23,11 +23,6 @@ CC       = gcc
 #CC       = icc
 #CC       = pgcc
 CPP      = g++ --std=c++11 -fpermissive -Wno-write-strings
-<<<<<<< HEAD
-#CPP      = g++ --std=c++17 -fpermissive -Wno-write-strings
-#CPP = g++ -std=c++11 -lpython3.10 -fpermissive -Wno-write-strings
-=======
->>>>>>> upstream/master
 
 # your tool for creating static libraries:
 AR        = ar rv
