@@ -27,7 +27,7 @@ int hyperspherical_HIS_create(int K,
       then relative to ppHIS.
   */
   double deltax, beta2, lambda, x, xfwd;
-  double *sqrtK, *one_over_sqrtK;
+  double *sqrtK, *one_over_sqrtK,*PhiL;
   int j, k, l, nx, lmax, l_recurrence_max;
   int current_chunk, index_x;
 
