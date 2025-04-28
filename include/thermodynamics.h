@@ -456,6 +456,14 @@ struct thermo_reionization_parameters{
   int index_re_first_xe;       /**< ionization fraction at redshift first_z (inferred from recombination code) */
   int index_re_step_sharpness; /**< sharpness of tanh jump */
 
+  /* parameters used by the gompverse */
+  int index_re_zt;
+  int index_re_Tv;
+  int index_re_LX;
+  int index_re_sigma8;
+  int index_re_alpha_gomp;
+  int index_re_beta_gomp;
+
   /* parameters used by all schemes */
 
   int index_re_reio_start;     /**< redshift above which hydrogen reionization neglected */

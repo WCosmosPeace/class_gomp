@@ -478,13 +478,13 @@ int thermodynamics_free_input(
 
   switch(pth->reio_parametrization){
 
-  case reio_none:
   case reio_robustgomp1:
   case reio_robustgomp2:
   case reio_gomp1:
   case reio_gomp2:
+  case reio_gompWDM:
   case reio_gomp_noSR:
-  case reio_gompWDM:	  
+  case reio_none:
   case reio_camb:
   case reio_half_tanh:
   default:
@@ -1041,6 +1041,7 @@ int thermodynamics_indices(
           
   case reio_robustgomp1:
   case reio_robustgomp2:
+  case reio_gompWDM:
     // leaving space open for modifications if needed
     class_define_index(ptrp->index_re_reio_redshift,_TRUE_,index_re,1);
     class_define_index(ptrp->index_re_reio_exponent,_TRUE_,index_re,1);
@@ -1050,12 +1051,27 @@ int thermodynamics_indices(
     class_define_index(ptrp->index_re_helium_fullreio_fraction,_TRUE_,index_re,1);
     class_define_index(ptrp->index_re_helium_fullreio_redshift,_TRUE_,index_re,1);
     class_define_index(ptrp->index_re_helium_fullreio_width,_TRUE_,index_re,1);
+    // changing treatment of the parameters
+    class_define_index(ptrp->index_re_zt,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_Tv,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_LX,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_sigma8,_TRUE_,index_re,1);
+    break;
+  case reio_gomp_noSR:
+    class_define_index(ptrp->index_re_reio_redshift,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_reio_exponent,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_reio_width,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_xe_before,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_xe_after,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_helium_fullreio_fraction,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_helium_fullreio_redshift,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_helium_fullreio_width,_TRUE_,index_re,1);
+    // adding the gomp parameters
+    class_define_index(ptrp->index_re_alpha_gomp,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_beta_gomp,_TRUE_,index_re,1);
     break;
   case reio_gomp1:
   case reio_gomp2:
-  case reio_gomp_noSR:
-  case reio_gompWDM:
-    /* adding the ionization efficiency */
 //    class_define_index(ptrp->index_re_zt,_TRUE_,index_re,1);
     class_define_index(ptrp->index_re_reio_redshift,_TRUE_,index_re,1);
     class_define_index(ptrp->index_re_reio_exponent,_TRUE_,index_re,1);
@@ -1065,6 +1081,9 @@ int thermodynamics_indices(
     class_define_index(ptrp->index_re_helium_fullreio_fraction,_TRUE_,index_re,1);
     class_define_index(ptrp->index_re_helium_fullreio_redshift,_TRUE_,index_re,1);
     class_define_index(ptrp->index_re_helium_fullreio_width,_TRUE_,index_re,1);
+    // adding gomp stuff
+    class_define_index(ptrp->index_re_zt,_TRUE_,index_re,1);
+    class_define_index(ptrp->index_re_sigma8,_TRUE_,index_re,1);
     break;
   case reio_camb:
   case reio_half_tanh:
@@ -1244,23 +1263,41 @@ int thermodynamics_set_parameters_reionization(
     /** - --> set values of these parameters, excepted those depending on the reionization redshift */
     if (pth->reio_parametrization == reio_robustgomp1) {
       preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
+      preio->reionization_parameters[preio->index_re_zt] = pth->zt;
+      preio->reionization_parameters[preio->index_re_Tv] = pth->Tv;
+      preio->reionization_parameters[preio->index_re_LX] = pth->LX;
+      preio->reionization_parameters[preio->index_re_sigma8] = pth->sigma8;
     }
     if (pth->reio_parametrization == reio_robustgomp2) {
       preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
+      preio->reionization_parameters[preio->index_re_zt] = pth->zt;
+      preio->reionization_parameters[preio->index_re_Tv] = pth->Tv;
+      preio->reionization_parameters[preio->index_re_LX] = pth->LX;
+      preio->reionization_parameters[preio->index_re_sigma8] = pth->sigma8;
     }
     if (pth->reio_parametrization == reio_gomp_noSR) {
       preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
+      preio->reionization_parameters[preio->index_re_alpha_gomp] = pth->alpha_gomp;
+      preio->reionization_parameters[preio->index_re_beta_gomp] = pth->beta_gomp;
     }
     if (pth->reio_parametrization == reio_gompWDM) {
       preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
+      preio->reionization_parameters[preio->index_re_zt] = pth->zt;
+      preio->reionization_parameters[preio->index_re_Tv] = pth->Tv;
+      preio->reionization_parameters[preio->index_re_LX] = pth->LX;
+      preio->reionization_parameters[preio->index_re_sigma8] = pth->sigma8;
     }
     if (pth->reio_parametrization == reio_gomp1) {
       preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
+      preio->reionization_parameters[preio->index_re_zt] = pth->zt;
+      preio->reionization_parameters[preio->index_re_sigma8] = pth->sigma8;
       /** - ionization efficiency value */
 //      preio->reionization_parameters[preio->index_re_zt] = pth->zt;
     }
     if (pth->reio_parametrization == reio_gomp2) {
         preio->reionization_parameters[preio->index_re_xe_after] = 1. + pth->YHe/(_not4_*(1.-pth->YHe));
+	preio->reionization_parameters[preio->index_re_zt] = pth->zt;
+        preio->reionization_parameters[preio->index_re_sigma8] = pth->sigma8;
         /** - ionization efficiency value */
 //        preio->reionization_parameters[preio->index_re_zt] = pth->zt;
     }
@@ -4353,8 +4390,10 @@ int thermodynamics_reionization_function(
       // start the HI reionization contribution
       scale = 1./(1. + z);
       if (pth->reio_z_or_tau == reio_z) {
-        pivot = pth->alpha_gomp;
-	tilt = pth->beta_gomp;
+        //pivot = pth->alpha_gomp;
+	pivot = preio->reionization_parameters[preio->index_re_alpha_gomp];
+	//tilt = pth->beta_gomp;
+	tilt = preio->reionization_parameters[preio->index_re_beta_gomp];
       }
       else {
         tilt = 7.49;
@@ -4390,26 +4429,30 @@ int thermodynamics_reionization_function(
       if (pth->reio_z_or_tau == reio_z) {
           if (pth->reio_parametrization == reio_robustgomp1) {
               // robustgomp1 comp 34 (pivot) & comp 24 (tilt)
-              pivot = (pth->Tv - log(pow(pow(pth->Tv,-40.065258 + pth->LX) + pth->zt + exp(pth->sigma8),pth->sigma8))) / 2.5946999 - exp(ppm->n_s - pow(pba->Omega0_b,pba->Omega0_m)) - pow(pba->h,pow(pba->Omega0_m,0.79247624)) / pow(0.8632819,ppm->n_s);
-              if (pth->sigma8 == 0) {
+              //pivot = (pth->Tv - log(pow(pow(pth->Tv,-40.065258 + pth->LX) + pth->zt + exp(pth->sigma8),pth->sigma8))) / 2.5946999 - exp(ppm->n_s - pow(pba->Omega0_b,pba->Omega0_m)) - pow(pba->h,pow(pba->Omega0_m,0.79247624)) / pow(0.8632819,ppm->n_s);
+              pivot = (preio->reionization_parameters[preio->index_re_Tv] - log(pow(pow(preio->reionization_parameters[preio->index_re_Tv],-40.065258 + preio->reionization_parameters[preio->index_re_LX]) + preio->reionization_parameters[preio->index_re_zt] + exp(preio->reionization_parameters[preio->index_re_sigma8]),preio->reionization_parameters[preio->index_re_sigma8]))) / 2.5946999 - exp(ppm->n_s - pow(pba->Omega0_b,pba->Omega0_m)) - pow(pba->h,pow(pba->Omega0_m,0.79247624)) / pow(0.8632819,ppm->n_s);
+	      if (pth->sigma8 == 0) {
                   fprintf(stdout,"WARNING: Code does not support the A_s and z_re as inputs (together) \n");
                   // prevents the crash but just a place holder
-                  tilt = pow(pth->zt/pba->h,0.4991587) - (pth->LX * (pba->Omega0_b - 0.20859116) + 6.0811667 - pba->Omega0_m * (pth->Tv - exp(pow(ppm->n_s,2.8035064)))) / 0.8157;
+                  tilt = pow(preio->reionization_parameters[preio->index_re_zt]/pba->h,0.4991587) - (preio->reionization_parameters[preio->index_re_LX] * (pba->Omega0_b - 0.20859116) + 6.0811667 - pba->Omega0_m * (preio->reionization_parameters[preio->index_re_Tv] - exp(pow(ppm->n_s,2.8035064)))) / 0.8157;
               }
               else {
-                  tilt = pow(pth->zt/pba->h,0.4991587) - (pth->LX * (pba->Omega0_b - 0.20859116) + 6.0811667 - pba->Omega0_m * (pth->Tv - exp(pow(ppm->n_s,2.8035064)))) / pth->sigma8;
+                  //tilt = pow(pth->zt/pba->h,0.4991587) - (pth->LX * (pba->Omega0_b - 0.20859116) + 6.0811667 - pba->Omega0_m * (pth->Tv - exp(pow(ppm->n_s,2.8035064)))) / pth->sigma8;
+		  tilt = pow(preio->reionization_parameters[preio->index_re_zt]/pba->h,0.4991587) - (preio->reionization_parameters[preio->index_re_LX] * (pba->Omega0_b - 0.20859116) + 6.0811667 - pba->Omega0_m * (preio->reionization_parameters[preio->index_re_Tv] - exp(pow(ppm->n_s,2.8035064)))) / preio->reionization_parameters[preio->index_re_sigma8];
               }
           }
           if (pth->reio_parametrization == reio_robustgomp2) {
               // robustgomp2 SR comp 27 (pivot) & cpmp 26 (tilt)
-              tilt = (0.12804393 - pba->Omega0_b) / pba->h * (pth->zt + (pth->Tv - pth->sigma8/pba->Omega0_m - 1.0161631) / pba->Omega0_m) - pow(ppm->n_s,3.052106) + exp(0.039550677 * pth->LX);
-              if (pth->sigma8 == 0) {
+              //tilt = (0.12804393 - pba->Omega0_b) / pba->h * (pth->zt + (pth->Tv - pth->sigma8/pba->Omega0_m - 1.0161631) / pba->Omega0_m) - pow(ppm->n_s,3.052106) + exp(0.039550677 * pth->LX);
+	      tilt = (0.12804393 - pba->Omega0_b) / pba->h * (preio->reionization_parameters[preio->index_re_zt] + (preio->reionization_parameters[preio->index_re_Tv] - preio->reionization_parameters[preio->index_re_sigma8]/pba->Omega0_m - 1.0161631) / pba->Omega0_m) - pow(ppm->n_s,3.052106) + exp(0.039550677 * preio->reionization_parameters[preio->index_re_LX]);
+              if (preio->reionization_parameters[preio->index_re_sigma8] == 0) {
                   fprintf(stdout,"WARNING: Code does not support the A_s and z_re as inputs (together) \n");
                   // prevents the crash but just a place holder
-                  pivot = pow(pba->Omega0_b / (pba->Omega0_m * 0.8159),(0.8159 * pba->h)) - pow(0.8159 * (19.920519 + pth->zt + pow(0.08890569,(40.43043 - pth->LX))),(ppm->n_s / pth->Tv)) - pba->Omega0_m;
+                  pivot = pow(pba->Omega0_b / (pba->Omega0_m * 0.8159),(0.8159 * pba->h)) - pow(0.8159 * (19.920519 + preio->reionization_parameters[preio->index_re_zt] + pow(0.08890569,(40.43043 - preio->reionization_parameters[preio->index_re_LX]))),(ppm->n_s / preio->reionization_parameters[preio->index_re_Tv])) - pba->Omega0_m;
               }
               else {
-                  pivot = pow(pba->Omega0_b / (pba->Omega0_m * pth->sigma8),(pth->sigma8 * pba->h)) - pow(pth->sigma8 * (19.920519 + pth->zt + pow(0.08890569,(40.43043 - pth->LX))),(ppm->n_s / pth->Tv)) - pba->Omega0_m;
+                  //pivot = pow(pba->Omega0_b / (pba->Omega0_m * pth->sigma8),(pth->sigma8 * pba->h)) - pow(pth->sigma8 * (19.920519 + pth->zt + pow(0.08890569,(40.43043 - pth->LX))),(ppm->n_s / pth->Tv)) - pba->Omega0_m;
+		  pivot = pow(pba->Omega0_b / (pba->Omega0_m * preio->reionization_parameters[preio->index_re_sigma8]),(preio->reionization_parameters[preio->index_re_sigma8] * pba->h)) - pow(preio->reionization_parameters[preio->index_re_sigma8] * (19.920519 + preio->reionization_parameters[preio->index_re_zt] + pow(0.08890569,(40.43043 - preio->reionization_parameters[preio->index_re_LX]))),(ppm->n_s / preio->reionization_parameters[preio->index_re_Tv])) - pba->Omega0_m;
               }
           }
       }
@@ -4444,14 +4487,16 @@ int thermodynamics_reionization_function(
       scale = 1./(1. + z);
       if (pth->reio_z_or_tau == reio_z) {
         // robust gomp WDM comp 40 (pivot) & comp 37 (tilt)
-	tilt = (((pba->Omega0_m * (((wX / (pth->Tv * (pth->Tv * 0.047253795))) + pow(0.091018416,(pow(wX + pba->h,pth->Tv) + (ppm->n_s * pba->Omega0_m)))) / pba->Omega0_b)) + pba->h) + ((pow(pth->zt - 6.1162124,pth->LX * 0.01298031)) - pth->sigma8)) + pba->h;
-        if (pth->sigma8 == 0) {
+	//tilt = (((pba->Omega0_m * (((wX / (pth->Tv * (pth->Tv * 0.047253795))) + pow(0.091018416,(pow(wX + pba->h,pth->Tv) + (ppm->n_s * pba->Omega0_m)))) / pba->Omega0_b)) + pba->h) + ((pow(pth->zt - 6.1162124,pth->LX * 0.01298031)) - pth->sigma8)) + pba->h;
+	tilt = (((pba->Omega0_m * (((wX / (preio->reionization_parameters[preio->index_re_Tv] * (preio->reionization_parameters[preio->index_re_Tv] * 0.047253795))) + pow(0.091018416,(pow(wX + pba->h,preio->reionization_parameters[preio->index_re_Tv]) + (ppm->n_s * pba->Omega0_m)))) / pba->Omega0_b)) + pba->h) + ((pow(preio->reionization_parameters[preio->index_re_zt] - 6.1162124,preio->reionization_parameters[preio->index_re_LX] * 0.01298031)) - preio->reionization_parameters[preio->index_re_sigma8])) + pba->h;
+        if (preio->reionization_parameters[preio->index_re_sigma8] == 0) {
           fprintf(stdout,"WARNING: Code does not support the A_s and z_re as inputs (together) \n");
           // prevents the crash but just a place holder
-          pivot = ((pba->Omega0_b - pba->Omega0_m) - ppm->n_s) * (((0.8159 + ((log(pth->zt + pow(1.0565715,pth->LX)) / (pth->Tv - (pth->LX * (pba->h * (0.040889084 - pow(pba->Omega0_m * wX,pth->Tv - pow(2.811946,pba->h))))))) - pba->Omega0_b)) + (-0.051592086 / 0.8159)) - pba->Omega0_b);
+          pivot = ((pba->Omega0_b - pba->Omega0_m) - ppm->n_s) * (((0.8159 + ((log(preio->reionization_parameters[preio->index_re_zt] + pow(1.0565715,preio->reionization_parameters[preio->index_re_LX])) / (preio->reionization_parameters[preio->index_re_Tv] - (preio->reionization_parameters[preio->index_re_LX] * (pba->h * (0.040889084 - pow(pba->Omega0_m * wX,preio->reionization_parameters[preio->index_re_Tv] - pow(2.811946,pba->h))))))) - pba->Omega0_b)) + (-0.051592086 / 0.8159)) - pba->Omega0_b);
         }
         else {
-          pivot = ((pba->Omega0_b - pba->Omega0_m) - ppm->n_s) * (((pth->sigma8 + ((log(pth->zt + pow(1.0565715,pth->LX)) / (pth->Tv - (pth->LX * (pba->h * (0.040889084 - pow(pba->Omega0_m * wX,pth->Tv - pow(2.811946,pba->h))))))) - pba->Omega0_b)) + (-0.051592086 / pth->sigma8)) - pba->Omega0_b);
+          //pivot = ((pba->Omega0_b - pba->Omega0_m) - ppm->n_s) * (((pth->sigma8 + ((log(pth->zt + pow(1.0565715,pth->LX)) / (pth->Tv - (pth->LX * (pba->h * (0.040889084 - pow(pba->Omega0_m * wX,pth->Tv - pow(2.811946,pba->h))))))) - pba->Omega0_b)) + (-0.051592086 / pth->sigma8)) - pba->Omega0_b);
+	  pivot = ((pba->Omega0_b - pba->Omega0_m) - ppm->n_s) * (((preio->reionization_parameters[preio->index_re_sigma8] + ((log(preio->reionization_parameters[preio->index_re_zt] + pow(1.0565715,preio->reionization_parameters[preio->index_re_LX])) / (preio->reionization_parameters[preio->index_re_Tv] - (preio->reionization_parameters[preio->index_re_LX] * (pba->h * (0.040889084 - pow(pba->Omega0_m * wX,preio->reionization_parameters[preio->index_re_Tv] - pow(2.811946,pba->h))))))) - pba->Omega0_b)) + (-0.051592086 / preio->reionization_parameters[preio->index_re_sigma8])) - pba->Omega0_b);
         }
       }
       else {
@@ -4460,7 +4505,7 @@ int thermodynamics_reionization_function(
           pivot = log(1./(1. + preio->reionization_parameters[preio->index_re_reio_redshift]));
       }
       temp = (log(scale) - pivot)*tilt;
-      poly = temp + 1.25218906e-01*pow(temp,2) + 3.53290242e-02*pow(temp,3) + 2.20265427e-03*pow(temp,4) + 7.48303918e-06*pow(temp,5);
+      poly = temp + 1.21558302e-01*pow(temp,2) + 3.35736942e-02*pow(temp,3) + 1.98406898e-03*pow(temp,4) + 1.09486868e-05*pow(temp,5);
       xHI = exp(-exp(poly));
       *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before]) * (1. - xHI) + preio->reionization_parameters[preio->index_re_xe_before];
       // case z < z_reio_start: helium contribution -- second reio -- (tanh of simpler argument)
@@ -4498,26 +4543,30 @@ int thermodynamics_reionization_function(
       // SR gomp1 comp19 (pivot) comp15 (tilt)
 //      pivot = (pow((85.08853 * pba->Omega0_b / pth->zt - pba->Omega0_b),pba->h) - ppm->n_s - pth->sigma8 / ppm->n_s) * (ppm->n_s + pba->Omega0_m);
       // SR gomp1 trained on core + edge comp22 (pivot) comp 25 (tilt)
-      pivot = ((((ppm->n_s - (log(0.11230898 * pth->zt) * -0.35580978)) * (0.048352774 - pth->sigma8)) - (pba->Omega0_m + ppm->n_s)) + (pow((pba->Omega0_b / pba->Omega0_m),pba->h)));
-        if (pth->sigma8 == 0) {
+      //pivot = ((((ppm->n_s - (log(0.11230898 * pth->zt) * -0.35580978)) * (0.048352774 - pth->sigma8)) - (pba->Omega0_m + ppm->n_s)) + (pow((pba->Omega0_b / pba->Omega0_m),pba->h)));
+      pivot = ((((ppm->n_s - (log(0.11230898 * preio->reionization_parameters[preio->index_re_zt]) * -0.35580978)) * (0.048352774 - preio->reionization_parameters[preio->index_re_sigma8])) - (pba->Omega0_m + ppm->n_s)) + (pow((pba->Omega0_b / pba->Omega0_m),pba->h)));
+        if (preio->reionization_parameters[preio->index_re_sigma8] == 0) {
             fprintf(stdout,"WARNING: Code does not support the A_s and z_re as inputs (together) \n");
             // prevents the crash but is not accurate and combine with the pivot
             // will likely give unphysical results
 //            tilt = log(1. / (0.8159) * pow((3.9115524 * pba->Omega0_m / pba->Omega0_b),(log(pth->zt) - pba->h - pba->Omega0_m)) );
-            tilt = ((log(pba->Omega0_b) * (((pow(0.005659511,pba->Omega0_m)) / 0.601493) - (log(pth->zt - (pow((pba->Omega0_m + (ppm->n_s * pba->h)),15.051933))) - pba->h))) + (pba->h / (0.8159)));
+            //tilt = ((log(pba->Omega0_b) * (((pow(0.005659511,pba->Omega0_m)) / 0.601493) - (log(pth->zt - (pow((pba->Omega0_m + (ppm->n_s * pba->h)),15.051933))) - pba->h))) + (pba->h / (0.8159)));
+	    tilt = ((log(pba->Omega0_b) * (((pow(0.005659511,pba->Omega0_m)) / 0.601493) - (log(preio->reionization_parameters[preio->index_re_zt] - (pow((pba->Omega0_m + (ppm->n_s * pba->h)),15.051933))) - pba->h))) + (pba->h / (0.8159)));
         }
         else{
 //            tilt = log(1. / pth->sigma8 * pow((3.9115524 * pba->Omega0_m / pba->Omega0_b),(log(pth->zt) - pba->h - pba->Omega0_m)) );
-            tilt =  ((log(pba->Omega0_b) * (((pow(0.005659511,pba->Omega0_m)) / 0.601493) - (log(pth->zt - (pow((pba->Omega0_m + (ppm->n_s * pba->h)),15.051933))) - pba->h))) + (pba->h / pth->sigma8));
+            //tilt =  ((log(pba->Omega0_b) * (((pow(0.005659511,pba->Omega0_m)) / 0.601493) - (log(pth->zt - (pow((pba->Omega0_m + (ppm->n_s * pba->h)),15.051933))) - pba->h))) + (pba->h / pth->sigma8));
+	    tilt =  ((log(pba->Omega0_b) * (((pow(0.005659511,pba->Omega0_m)) / 0.601493) - (log(preio->reionization_parameters[preio->index_re_zt] - (pow((pba->Omega0_m + (ppm->n_s * pba->h)),15.051933))) - pba->h))) + (pba->h / preio->reionization_parameters[preio->index_re_sigma8]));
         }
     }
     if (pth->reio_parametrization == reio_gomp2) {
         // SR gomp2 comp22 (pivot) comp10 (tilt)
 //        tilt = pow((log(pth->zt) + pba->Omega0_m / pba->h), pow(pba->Omega0_b, -0.1410175));
         // SR gomp2 trained on core + edge comp22 (pivot) comp 11 (tilt)
-        tilt = (pow(((pth->zt - (pow(pba->Omega0_m,-1.583228))) / (pba->Omega0_b * pba->h)),0.31627414));
+        //tilt = (pow(((pth->zt - (pow(pba->Omega0_m,-1.583228))) / (pba->Omega0_b * pba->h)),0.31627414));
+	tilt = (pow(((preio->reionization_parameters[preio->index_re_zt] - (pow(pba->Omega0_m,-1.583228))) / (pba->Omega0_b * pba->h)),0.31627414));
         
-        if (pth->sigma8 == 0) {
+        if (preio->reionization_parameters[preio->index_re_sigma8] == 0) {
           fprintf(stdout,"Code does not support the A_s and z_re as inputs (together) \n");
           // see previous comment in gomp1
 //          pivot = log(0.33022612 / (0.8159) * pow(pba->Omega0_m, -0.50538677) * pow(((pth->zt + pow((0.8159), 0.41064402) / pba->Omega0_b) * pow(pba->h,0.7619934)), -0.50538677 * ppm->n_s));
@@ -4525,7 +4574,8 @@ int thermodynamics_reionization_function(
         }
         else {
 //          pivot = log(0.33022612 / pth->sigma8 * pow(pba->Omega0_m, -0.50538677) * pow(((pth->zt + pow(pth->sigma8, 0.41064402) / pba->Omega0_b) * pow(pba->h,0.7619934)), -0.50538677 * ppm->n_s));
-            pivot = ((( pow((pba->Omega0_b / pba->Omega0_m),pba->Omega0_m)) - (pow(log( ( pow((pth->zt + (pow(pba->Omega0_b,-0.49822742))),pth->sigma8)) * pba->h),0.5721157))) - (pow(ppm->n_s,1.8340757)));
+            //pivot = ((( pow((pba->Omega0_b / pba->Omega0_m),pba->Omega0_m)) - (pow(log( ( pow((pth->zt + (pow(pba->Omega0_b,-0.49822742))),pth->sigma8)) * pba->h),0.5721157))) - (pow(ppm->n_s,1.8340757)));
+	    pivot = ((( pow((pba->Omega0_b / pba->Omega0_m),pba->Omega0_m)) - (pow(log( ( pow((preio->reionization_parameters[preio->index_re_zt] + (pow(pba->Omega0_b,-0.49822742))),preio->reionization_parameters[preio->index_re_sigma8])) * pba->h),0.5721157))) - (pow(ppm->n_s,1.8340757)));
         }
           
           
