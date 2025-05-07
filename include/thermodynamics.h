@@ -5,7 +5,7 @@
 
 #include "background.h"
 //#include "fourier.h"
-#include "primordial.h"
+//#include "primordial.h"
 #include "evolver_ndf15.h"
 #include "evolver_rkck.h"
 #include "wrap_hyrec.h"
@@ -101,6 +101,8 @@ struct thermodynamics
   short compute_damping_scale; /**< do we want to compute the simplest analytic approximation to the photon damping (or diffusion) scale? */
   
   double sigma8;       /**< sigma_8 stored here for the gompertz curve */
+
+  double n_s;         /**< n_s stored here for the gompertz curve */
 
   /** parameters for interacting dark matter */
 
@@ -461,6 +463,7 @@ struct thermo_reionization_parameters{
   int index_re_Tv;
   int index_re_LX;
   int index_re_sigma8;
+  int index_re_n_s;
   int index_re_alpha_gomp;
   int index_re_beta_gomp;
 
@@ -519,7 +522,7 @@ struct thermodynamics_parameters_and_workspace {
 
   /* structures containing fixed input parameters (indices, ...) */
   struct background * pba;
-  struct primordial * ppm;
+  //struct primordial * ppm;
   //struct fourier * pfo;
   struct precision * ppr;
   struct thermodynamics * pth;
@@ -550,7 +553,7 @@ extern "C" {
 
   int thermodynamics_init(struct precision * ppr,
                           struct background * pba,
-                          struct primordial * ppm,
+                          //struct primordial * ppm,
                           //struct fourier * pfo,
                           struct thermodynamics * pth);
 
@@ -589,7 +592,7 @@ extern "C" {
 
   int thermodynamics_solve(struct precision * ppr,
                            struct background * pba,
-                           struct primordial * ppm,
+                           //struct primordial * ppm,
                            //struct fourier * pfo,
                            struct thermodynamics * pth,
                            struct thermo_workspace* ptw,
@@ -607,7 +610,7 @@ extern "C" {
 
   int thermodynamics_vector_init(struct precision * ppr,
                                  struct background * pba,
-                                 struct primordial * ppm,
+                                 //struct primordial * ppm,
                                  //struct fourier * pfo,
                                  struct thermodynamics * pth,
                                  double z,
@@ -672,7 +675,7 @@ extern "C" {
                                           double z,
                                           double * y,
                                           struct background * pba,
-                                          struct primordial * ppm,
+                                          //struct primordial * ppm,
                                           //struct fourier * pfo,
                                           struct thermodynamics * pth,
                                           struct thermo_workspace * ptw,
@@ -681,7 +684,7 @@ extern "C" {
 
   int thermodynamics_reionization_function(double z,
                                            struct background * pba,
-                                           struct primordial * ppm,
+                                           //struct primordial * ppm,
                                            //struct fourier * pfo,
                                            struct thermodynamics * pth,
                                            struct thermo_reionization_parameters * preio,
