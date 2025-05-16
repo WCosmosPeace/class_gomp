@@ -451,7 +451,7 @@ int input_read_from_file(struct file_content * pfc,
       printf("    calling background module to extract the effective w(tau), Omega_m(tau) parameters");
       printf("    required by this method\n");
     }
-    class_call(input_prepare_pk_eq(ppr,pba,ppm,pth,pfo,input_verbose,errmsg),
+    class_call(input_prepare_pk_eq(ppr,pba,pth,pfo,input_verbose,errmsg),
                errmsg,
                errmsg);
   }
@@ -3999,7 +3999,7 @@ int input_read_parameters_nonlinear(struct file_content * pfc,
 
 int input_prepare_pk_eq(struct precision * ppr,
                         struct background *pba,
-                        struct primordial * ppm,
+                        //struct primordial * ppm
                         struct thermodynamics *pth,
                         struct fourier *pfo,
                         int input_verbose,
