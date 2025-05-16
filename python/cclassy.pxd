@@ -116,6 +116,13 @@ cdef extern from "class.h":
         int index_th_Tb
         double tau_reio
         double z_reio
+        double zt
+        double Tv
+        double LX
+        double alpha_gomp
+        double beta_gomp
+        double sigma8
+        double n_s
         double z_rec
         double tau_rec
         double rs_rec
@@ -462,7 +469,7 @@ cdef extern from "class.h":
     int input_read_from_file(void*, void*, void*, void*, void*, void*, void*, void*, void*,
         void*, void*, void*, char*)
     int background_init(void*,void*)
-    int thermodynamics_init(void*,void*,void*,void*)
+    int thermodynamics_init(void*,void*,void*)
     int perturbations_init(void*,void*,void*,void*)
     int primordial_init(void*,void*,void*)
     int fourier_init(void*,void*,void*,void*,void*,void*)
