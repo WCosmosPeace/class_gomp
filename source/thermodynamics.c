@@ -2592,6 +2592,7 @@ int thermodynamics_reionization_evolve_with_tau(
     case reio_gomp2:
     case reio_gomp_noSR:
     case reio_gompWDM:
+      //fprintf(stdout, "Por aca shooting\n");
       ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = 20.;
       //ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift]+ppr->reionization_start_factor*pth->reionization_width;
       //ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = z_mid;
@@ -4409,10 +4410,15 @@ int thermodynamics_reionization_function(
       temp = (log(scale) - pivot)*tilt;
       poly = temp + 1.25218906e-01*pow(temp,2) + 3.53290242e-02*pow(temp,3) + 2.20265427e-03*pow(temp,4) + 7.48303918e-06*pow(temp,5);
       xHI = exp(-exp(poly));
+      // adding hack for interpolation between gomp and xe_before
+      if (z > 19.0 && xHI >= 0.995){
+        xHI = 1.;
+      }
       *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before]) * (1. - xHI) + preio->reionization_parameters[preio->index_re_xe_before];
       // case z < z_reio_start: helium contribution -- second reio -- (tanh of simpler argument)
       argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z) / preio->reionization_parameters[preio->index_re_helium_fullreio_width];
       *x += preio->reionization_parameters[preio->index_re_helium_fullreio_fraction] * (tanh(argument)+1.)/2.;
+      
   }
   break;
 
