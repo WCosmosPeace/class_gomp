@@ -4411,7 +4411,9 @@ int thermodynamics_reionization_function(
       poly = temp + 1.25218906e-01*pow(temp,2) + 3.53290242e-02*pow(temp,3) + 2.20265427e-03*pow(temp,4) + 7.48303918e-06*pow(temp,5);
       xHI = exp(-exp(poly));
       // adding hack for interpolation between gomp and xe_before
-      if (z > 19.0 && xHI >= 0.995){
+      if (z > 19.9 && xHI >= 0.995 && z < 20.){
+      //if (xHI >= 0.995) {
+      // make some sort of smooth transition here
         xHI = 1.;
       }
       *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before]) * (1. - xHI) + preio->reionization_parameters[preio->index_re_xe_before];
