@@ -231,7 +231,10 @@ int thermodynamics_at_z(
 
     /* some very specific cases require linear interpolation because of a break in the derivative of the functions */
     if (((pth->reio_parametrization == reio_half_tanh) && (z < 2*pth->z_reio))
-        || ((pth->reio_parametrization == reio_inter) && (z < 50.))) {
+        || ((pth->reio_parametrization == reio_inter) && (z < 50.))
+	|| ((pth->reio_parametrization == reio_gomp_noSR) && (z < pth->z_reio + 10.))
+        || ((pth->reio_parametrization == reio_robustgomp1) && (z < pth->z_reio +10.))
+        || ((pth->reio_parametrization == reio_gompWDM) && (z < pth->z_reio + 10.))) {
 
       class_call(array_interpolate_linear(pth->z_table,
                                           pth->tt_size,
@@ -4410,12 +4413,6 @@ int thermodynamics_reionization_function(
       temp = (log(scale) - pivot)*tilt;
       poly = temp + 1.25218906e-01*pow(temp,2) + 3.53290242e-02*pow(temp,3) + 2.20265427e-03*pow(temp,4) + 7.48303918e-06*pow(temp,5);
       xHI = exp(-exp(poly));
-      // adding hack for interpolation between gomp and xe_before
-      if (z > 19.9 && xHI >= 0.995 && z < 20.){
-      //if (xHI >= 0.995) {
-      // make some sort of smooth transition here
-        xHI = 1.;
-      }
       *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before]) * (1. - xHI) + preio->reionization_parameters[preio->index_re_xe_before];
       // case z < z_reio_start: helium contribution -- second reio -- (tanh of simpler argument)
       argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z) / preio->reionization_parameters[preio->index_re_helium_fullreio_width];
