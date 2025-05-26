@@ -1041,7 +1041,7 @@ int thermodynamics_indices(
     break;
 
     /* case where x_e(z) taken like in CAMB (other cases can be added) */
-          
+
   case reio_robustgomp1:
   case reio_robustgomp2:
   case reio_gompWDM:
@@ -1342,15 +1342,15 @@ int thermodynamics_set_parameters_reionization(
     /** - --> if reionization redshift given as an input, initialize the remaining values*/
 
     if (pth->reio_z_or_tau == reio_z) {
-      
+
       /* reionization redshift */
       preio->reionization_parameters[preio->index_re_reio_redshift] = pth->z_reio;
       /* infer starting redshift for hydrogen */
-        
+
       if (pth->reio_parametrization == reio_robustgomp1) {
         preio->reionization_parameters[preio->index_re_reio_start] = preio->reionization_parameters[preio->index_re_reio_redshift];
       }
-        
+
       if (pth->reio_parametrization == reio_robustgomp2) {
         preio->reionization_parameters[preio->index_re_reio_start] = preio->reionization_parameters[preio->index_re_reio_redshift];
       }
@@ -1363,13 +1363,13 @@ int thermodynamics_set_parameters_reionization(
       if (pth->reio_parametrization == reio_gomp1) {
         preio->reionization_parameters[preio->index_re_reio_start] = preio->reionization_parameters[preio->index_re_reio_redshift];
         // can also hardcode to large value, say 20
-        
+
       }
-        
+
       if (pth->reio_parametrization == reio_gomp2) {
           preio->reionization_parameters[preio->index_re_reio_start] = preio->reionization_parameters[preio->index_re_reio_redshift];
           // can also hardcode to large value, say 20
-          
+
       }
 
         /* if starting redshift for helium is larger, take that one (does not happen in realistic models) */
@@ -1395,7 +1395,7 @@ int thermodynamics_set_parameters_reionization(
 
       }
       else {
-        
+
         preio->reionization_parameters[preio->index_re_reio_start] = pth->z_reio;
       }
 
@@ -1813,7 +1813,7 @@ int thermodynamics_solve(
 
     /** --> (c2) otherwise, just integrate quantities over the current interval. */
     else{
-      
+
       class_call(generic_evolver(thermodynamics_derivs,
                                  interval_limit[index_interval],
                                  interval_limit[index_interval+1],
@@ -1833,12 +1833,12 @@ int thermodynamics_solve(
                  pth->error_message,
                  pth->error_message);
     }
-      
+
   }
-  
+
   /** - Compute reionization optical depth, if not supplied as input parameter */
   if (pth->reio_z_or_tau == reio_z) {
-    
+
     class_call(thermodynamics_reionization_get_tau(ppr,
                                                    pba,
                                                    pth,
@@ -2663,12 +2663,12 @@ int thermodynamics_reionization_evolve_with_tau(
     if (tau_mid > pth->tau_reio) {
       z_sup=z_mid;
       tau_sup=tau_mid;
-      
+
     }
     else {
       z_inf=z_mid;
       tau_inf=tau_mid;
-      
+
     }
 
     /* Restore initial conditions */
@@ -2687,7 +2687,7 @@ int thermodynamics_reionization_evolve_with_tau(
 
   /** - Store the ionization redshift in the thermodynamics structure */
   pth->z_reio = ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_redshift];
-   
+
 
   /** - Free tempeoraty thermo vector */
   class_call(thermodynamics_vector_free(ptv),
@@ -4362,7 +4362,7 @@ int thermodynamics_reionization_function(
   double argument;
   int i;
   double z_jump;
-  
+
   /** necessary local variables for gromp reio */
   double pivot;
   double tilt;
@@ -4370,7 +4370,7 @@ int thermodynamics_reionization_function(
   double scale;
   double xHI;
   double temp;
-  double poly;
+  double rat;
 
   int jump;
   double center,before, after,width,one_jump;
@@ -4384,7 +4384,7 @@ int thermodynamics_reionization_function(
   double p_LX;
   double wX;
 
-  
+
   switch (pth->reio_parametrization) {
 
     /** - no reionization means nothing to be added to xe_before */
@@ -4411,13 +4411,13 @@ int thermodynamics_reionization_function(
         pivot = log(1./(1. + preio->reionization_parameters[preio->index_re_reio_redshift]));
       }
       temp = (log(scale) - pivot)*tilt;
-      poly = temp + 1.25218906e-01*pow(temp,2) + 3.53290242e-02*pow(temp,3) + 2.20265427e-03*pow(temp,4) + 7.48303918e-06*pow(temp,5);
-      xHI = exp(-exp(poly));
+      rat = temp * (1. + temp * (0.12748899 + temp * 0.10220648)) / (1. + (temp * (-0.00604965 + temp * 0.0815222)));
+      xHI = exp(-exp(rat));
       *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before]) * (1. - xHI) + preio->reionization_parameters[preio->index_re_xe_before];
       // case z < z_reio_start: helium contribution -- second reio -- (tanh of simpler argument)
       argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z) / preio->reionization_parameters[preio->index_re_helium_fullreio_width];
       *x += preio->reionization_parameters[preio->index_re_helium_fullreio_fraction] * (tanh(argument)+1.)/2.;
-      
+
   }
   break;
 
@@ -4474,8 +4474,8 @@ int thermodynamics_reionization_function(
           pivot = log(1./(1. + preio->reionization_parameters[preio->index_re_reio_redshift]));
       }
       temp = (log(scale) - pivot)*tilt;
-      poly = temp + 1.25218906e-01*pow(temp,2) + 3.53290242e-02*pow(temp,3) + 2.20265427e-03*pow(temp,4) + 7.48303918e-06*pow(temp,5);
-      xHI = exp(-exp(poly));
+      rat = temp * (1. + temp * (0.12748899 + temp * 0.10220648)) / (1. + (temp * (-0.00604965 + temp * 0.0815222)));
+      xHI = exp(-exp(rat));
       *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before]) * (1. - xHI) + preio->reionization_parameters[preio->index_re_xe_before];
       // case z < z_reio_start: helium contribution -- second reio -- (tanh of simpler argument)
       argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z) / preio->reionization_parameters[preio->index_re_helium_fullreio_width];
@@ -4517,16 +4517,16 @@ int thermodynamics_reionization_function(
           pivot = log(1./(1. + preio->reionization_parameters[preio->index_re_reio_redshift]));
       }
       temp = (log(scale) - pivot)*tilt;
-      poly = temp + 1.21558302e-01*pow(temp,2) + 3.35736942e-02*pow(temp,3) + 1.98406898e-03*pow(temp,4) + 1.09486868e-05*pow(temp,5);
-      xHI = exp(-exp(poly));
+      rat = temp + 1.21558302e-01*pow(temp,2) + 3.35736942e-02*pow(temp,3) + 1.98406898e-03*pow(temp,4) + 1.09486868e-05*pow(temp,5);
+      xHI = exp(-exp(rat));
       *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before]) * (1. - xHI) + preio->reionization_parameters[preio->index_re_xe_before];
       // case z < z_reio_start: helium contribution -- second reio -- (tanh of simpler argument)
       argument = (preio->reionization_parameters[preio->index_re_helium_fullreio_redshift] - z) / preio->reionization_parameters[preio->index_re_helium_fullreio_width];
       *x += preio->reionization_parameters[preio->index_re_helium_fullreio_fraction] * (tanh(argument)+1.)/2.;
   }
   break;
-          
-          
+
+
   /** add the gromp curve here */
   case reio_gomp1:
   case reio_gomp2:
@@ -4539,16 +4539,16 @@ int thermodynamics_reionization_function(
 //  p_te = pba->Omega0_m;
   //p_so = pfo->sigma8;
   //double ss = *p_so;
-  
+
 //  fprintf(stdout,"The value of Om=%e, sigma8=%e, and zt=%e are: ", p_te, p_so, p_zt);
   //fprintf(stdout,"The value of h is %e, ns=%e, sigma8=%e, and Ob is %e hopefully.",p_testa,p_tro,p_so,p_te);
-//  still need the case z > z_reio_start 
+//  still need the case z > z_reio_start
   if (z > preio->reionization_parameters[preio->index_re_reio_start]) {
     *x = preio->reionization_parameters[preio->index_re_xe_before];
   }
   else {
 //  start the hydrogen reionization contribution
-//  
+//
   scale = 1./(1. + z);
   if (pth->reio_z_or_tau == reio_z) {
     if (pth->reio_parametrization == reio_gomp1) {
@@ -4577,25 +4577,25 @@ int thermodynamics_reionization_function(
         // SR gomp2 trained on core + edge comp22 (pivot) comp 11 (tilt)
         //tilt = (pow(((pth->zt - (pow(pba->Omega0_m,-1.583228))) / (pba->Omega0_b * pba->h)),0.31627414));
 	tilt = (pow(((preio->reionization_parameters[preio->index_re_zt] - (pow(pba->Omega0_m,-1.583228))) / (pba->Omega0_b * pba->h)),0.31627414));
-        
+
         if (preio->reionization_parameters[preio->index_re_sigma8] == 0) {
           fprintf(stdout,"Code does not support the A_s and z_re as inputs (together) \n");
           // see previous comment in gomp1
 //          pivot = log(0.33022612 / (0.8159) * pow(pba->Omega0_m, -0.50538677) * pow(((pth->zt + pow((0.8159), 0.41064402) / pba->Omega0_b) * pow(pba->h,0.7619934)), -0.50538677 * ppm->n_s));
-            
+
         }
         else {
 //          pivot = log(0.33022612 / pth->sigma8 * pow(pba->Omega0_m, -0.50538677) * pow(((pth->zt + pow(pth->sigma8, 0.41064402) / pba->Omega0_b) * pow(pba->h,0.7619934)), -0.50538677 * ppm->n_s));
             //pivot = ((( pow((pba->Omega0_b / pba->Omega0_m),pba->Omega0_m)) - (pow(log( ( pow((pth->zt + (pow(pba->Omega0_b,-0.49822742))),pth->sigma8)) * pba->h),0.5721157))) - (pow(ppm->n_s,1.8340757)));
 	    pivot = ((( pow((pba->Omega0_b / pba->Omega0_m),pba->Omega0_m)) - (pow(log( ( pow((preio->reionization_parameters[preio->index_re_zt] + (pow(pba->Omega0_b,-0.49822742))),preio->reionization_parameters[preio->index_re_sigma8])) * pba->h),0.5721157))) - (pow(preio->reionization_parameters[preio->index_re_n_s],1.8340757)));
         }
-          
-          
+
+
     }
-      
+
 //  tilt = 8.331045;
-  
-  
+
+
 //    fprintf(stdout,"ss=%e or %e\n",pth->sigma8);
     //pivot = (-1.0389123 - ss)*(((pba->Omega0_m*pba->h) - pba->Omega0_b) + ppm->n_s);
     // 0226 SR
@@ -4612,11 +4612,11 @@ int thermodynamics_reionization_function(
   temp = (log(scale) - pivot)*tilt;
 //  poly = temp + 0.15034337*pow(temp,2) + 0.04849586*pow(temp,3) + 0.00526138*pow(temp,4) + 0.0002182*pow(temp,5);
 //  poly = temp + 0.109881282*pow(temp,2) + 0.0245923405*pow(temp,3) + 0.000280982197*pow(temp,4) - 7.76864358e-05*pow(temp,5);
-  poly = temp + 1.12988593e-01*pow(temp,2) + 2.59887121e-02*pow(temp,3) + 5.49059964e-04*pow(temp,4) - 6.51788022e-05*pow(temp,5); // edge + core poly6
-  xHI = exp(-exp(poly));
+  rat = temp + 1.12988593e-01*pow(temp,2) + 2.59887121e-02*pow(temp,3) + 5.49059964e-04*pow(temp,4) - 6.51788022e-05*pow(temp,5); // edge + core poly6
+  xHI = exp(-exp(rat));
   *x = (preio->reionization_parameters[preio->index_re_xe_after] - preio->reionization_parameters[preio->index_re_xe_before])
        *(1. - xHI)
-       +preio->reionization_parameters[preio->index_re_xe_before]; 
+       +preio->reionization_parameters[preio->index_re_xe_before];
   //fprintf(stdout,"Checking issues: z_start=%e, z=%e, pivot=%e, xHI=%e, and x=%e \n",preio->reionization_parameters[preio->index_re_reio_start],z,pivot,xHI,*x);
 //  for helium contribution we could use the helium tanh prescription
 //
