@@ -2,6 +2,7 @@
 #define __INJECTION__
 
 #include "common.h" //Use here ONLY the things required for defining the struct (i.e. common.h for the ErrorMsg)
+#include "loadtable.h"
 
 /**
  * All injection parameters and evolution that other modules need to know.
@@ -31,6 +32,8 @@ struct injection{
 
   double DM_decay_fraction;
   double DM_decay_Gamma;
+
+  struct DarkHistory_decay DHparams;
 
   double PBH_evaporation_fraction;
   double PBH_evaporation_mass;
@@ -128,6 +131,7 @@ struct injection{
   int index_inj_diss;
   int index_inj_DM_ann;
   int index_inj_DM_dec;
+  int index_DH_inj_DM_dec;
   int index_inj_PBH_eva;
   int index_inj_PBH_acc;
   int index_inj_tot;
@@ -167,6 +171,7 @@ struct injection{
 
   int has_DM_ann;
   int has_DM_dec;
+  int DH_has_DM_dec;
   int has_PBH_eva;
   int has_PBH_acc;
 
@@ -226,6 +231,10 @@ extern "C" {
                                      double * energy_rate);
 
   int injection_rate_DM_decay(struct injection * phe,
+                              double z,
+                              double * energy_rate);
+
+  int DH_injection_rate_DM_decay(struct injection * phe,
                               double z,
                               double * energy_rate);
 

@@ -32,8 +32,7 @@
  */
 
 #include "thermodynamics.h"
-
-
+#include "loadtable.h"
 #include "history.h"
 #include "hyrectools.h"
 #include "helium.h"
@@ -398,6 +397,14 @@ int thermodynamics_init(
                pth->error_message);
   }
 
+  if (pth->DH_has_exotic_injection == _TRUE_) {
+    class_call(injection_init(ppr,
+                              pba,
+                              pth),
+               (pth->in).error_message,
+               pth->error_message);
+  }
+
   /** - assign reionisation parameters */
   class_call(thermodynamics_set_parameters_reionization(ppr,
                                                         pba,
@@ -449,6 +456,13 @@ int thermodynamics_free(
                         ) {
 
   if (pth->has_exotic_injection == _TRUE_) {
+    /* Free all injection-related functions */
+    class_call(injection_free(pth),
+               (pth->in).error_message,
+               pth->error_message);
+  }
+
+  if (pth->DH_has_exotic_injection == _TRUE_) {
     /* Free all injection-related functions */
     class_call(injection_free(pth),
                (pth->in).error_message,
@@ -1832,9 +1846,16 @@ int thermodynamics_solve(
                                  pth->error_message),
                  pth->error_message,
                  pth->error_message);
+        //printf("interval limit = %e to %e\n", interval_limit[index_interval], interval_limit[index_interval+1]);
     }
 
   }
+
+  //int index_z;
+  //for (index_z=0; index_z<pth->tt_size-1; index_z++) {
+    //printf("BEFORE calculate tau redshift: %e    |  x_e:   %e\n", pth->z_table[index_z], pth->thermodynamics_table[index_z*pth->th_size+pth->index_th_xe]);
+  //}
+
 
   /** - Compute reionization optical depth, if not supplied as input parameter */
   if (pth->reio_z_or_tau == reio_z) {
@@ -2438,6 +2459,11 @@ int thermodynamics_reionization_evolve_with_tau(
   case reio_gomp1:
   case reio_gomp2:
   case reio_gomp_noSR:
+    if (pth->tau_reio > 0.) {
+      class_stop(pth->error_message,
+        "tau_reio can be an input only for reio_camb and reio_half_tanh; "
+        "gomp parametrizations do not allow tau_reio as input.");
+    }
   case reio_gompWDM:
     /* try z_sup */
     ptw->ptrp->reionization_parameters[ptw->ptrp->index_re_reio_start] = ppr->reionization_z_start_max;
@@ -2843,6 +2869,13 @@ int thermodynamics_derivs(
                pin->error_message,
                error_message);
   }
+  if (pth->DH_has_exotic_injection == _TRUE_) {
+    /* In case of energy injection, we currently neglect the contribution to helium ionization for RecFast ! */
+    /* Note that we calculate here the energy injection INCLUDING reionization ! */
+    class_call(injection_calculate_at_z(pba,pth,x,z,Tmat,pvecback),
+               pin->error_message,
+               error_message);
+  }
 
   /** - Derivative of the ionization fractions */
   x_H = ptdw->x_H;
@@ -2979,6 +3012,16 @@ int thermodynamics_derivs(
     /* Add heating from energy injection */
     if (pth->has_exotic_injection == _TRUE_) {
       dy[ptv->index_ti_D_Tmat] -= pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+z));
+    }
+    if (pth->DH_has_exotic_injection == _TRUE_) {
+      if(z<=2910){
+        dy[ptv->index_ti_D_Tmat] += Calc_dxedz_dTdz(2, z, &pin->DHparams);
+        //printf("z = %f, dT = %e\n", z, dy[ptv->index_ti_D_Tmat]);
+      }
+      else if(z>2910){
+        dy[ptv->index_ti_D_Tmat] -= pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+z)); 
+        //printf("z = %f, dT = %e\n", z, dy[ptv->index_ti_D_Tmat]);
+      } 
     }
     /* Add term coming from idm_b */
     if (pth->has_idm_b == _TRUE_){
@@ -3201,7 +3244,22 @@ int thermodynamics_sources(
   /** - Store the results in the table. Results are obtained in order of decreasing z, and stored in order of growing z */
 
   /* ionization fraction */
-  pth->thermodynamics_table[(pth->tt_size-index_z-1)*pth->th_size+pth->index_th_xe] = x;
+  int index_in_table = -1;
+  for (int i = 0; i < pth->tt_size; i++) {
+      if (fabs(pth->z_table[i] - z) < 1e-8) { // 或者用更稳健的匹配
+          index_in_table = i;
+          break;
+      }
+  }
+
+  if (index_in_table >= 0) {
+      pth->thermodynamics_table[index_in_table*pth->th_size + pth->index_th_xe] = x;
+  } else {
+      printf("Warning: could not match z=%e to z_table\n", z);
+  }
+
+  //pth->thermodynamics_table[(pth->tt_size-index_z-1)*pth->th_size+pth->index_th_xe] = x;
+  //printf("source function z = %e, xe = %e \n", z, x);
 
   /* Tb */
   pth->thermodynamics_table[(pth->tt_size-index_z-1)*pth->th_size+pth->index_th_Tb] = Tmat;
@@ -3291,7 +3349,10 @@ int thermodynamics_reionization_get_tau(
       x_e_min = pth->thermodynamics_table[index_z*pth->th_size+pth->index_th_xe];
       index_reio_start = index_z;
     }
+    //printf("calculate tau redshift: %e    |  x_e:   %e\n", pth->z_table[index_z], pth->thermodynamics_table[index_z*pth->th_size+pth->index_th_xe]);
   }
+
+  printf("reionization start = %e \n",pth->z_table[index_reio_start]);
 
   class_test(index_reio_start == pth->tt_size,
              pth->error_message,
@@ -4914,7 +4975,7 @@ int thermodynamics_output_data(
     class_call(background_tau_of_z(pba, z, &tau),
                pba->error_message,
                pth->error_message);
-
+    //printf("STore: redshift = %e, xe = %e\n",z,pvecthermo[pth->index_th_xe]);
     class_store_double(dataptr,1./(1.+z),_TRUE_,storeidx);
     class_store_double(dataptr,z,_TRUE_,storeidx);
     class_store_double(dataptr,tau,_TRUE_,storeidx);

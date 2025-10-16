@@ -1,6 +1,6 @@
 #include "wrap_recfast.h"
 #include "thermodynamics.h"
-
+#include "loadtable.h"
 
 /**
   *********************************************************************************************************************************
@@ -180,6 +180,10 @@ int recfast_dx_H_dz(struct thermodynamics* pth, struct thermorecfast * pre, doub
     ion_lya = pin->pvecdeposition[pin->index_dep_lya];
 
     *dxH_dz += -1./nH*((ion_H+ion_He)/(_E_H_ion_*_eV_)+ion_lya*(1.-C_nofudge)/(_E_H_lya_*_eV_))/(Hz*(1.+z));
+  }
+
+  if (pth->DH_has_exotic_injection == _TRUE_) {
+      *dxH_dz += Calc_dxedz_dTdz(0, z, &pin->DHparams);
   }
 
   return _SUCCESS_;

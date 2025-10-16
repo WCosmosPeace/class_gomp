@@ -1,120 +1,53 @@
-CLASS: Cosmic Linear Anisotropy Solving System  {#mainpage}
-==============================================
+## Supplementary Information for $\text{DM\_Gomp.ini}$ (DarkHistory/CLASS Integration)
 
-Authors: Julien Lesgourgues, Thomas Tram, Nils Schoeneberg
+This branch, `DH_CLASS_integration`, includes Dark Matter decay integration using the DarkHistory.
 
-with several major inputs from other people, especially Benjamin
-Audren, Simon Prunet, Jesus Torrado, Miguel Zumalacarregui, Francesco
-Montanari, Deanna Hooper, Samuel Brieden, Daniel Meinert, Matteo Lucca, etc.
+To successfully run the included parameter file, `DM_Gomp.ini`, **without a full installation of the DarkHistory code**, please follow these steps to simulate the expected data environment.
 
-For download and information, see http://class-code.net
+-----
 
+### 1\. Set up the Data Directory Structure
 
-Compiling CLASS and getting started
------------------------------------
+Ensure the `DarkHistory` directory is **at the same level** as the `class_gomp` directory. You will need to create the required subdirectories within it:
 
-(the information below can also be found on the webpage, just below
-the download button)
+```bash
+# Navigate to the directory containing both class_gomp and DarkHistory
+# If DarkHistory doesn't exist yet, this creates the necessary structure:
+mkdir -p DarkHistory/data
+mkdir -p DarkHistory/decay_e
+```
 
-Download the code from the webpage and unpack the archive (tar -zxvf
-class_vx.y.z.tar.gz), or clone it from
-https://github.com/lesgourg/class_public. Go to the class directory
-(cd class/ or class_public/ or class_vx.y.z/) and compile (make clean;
-make class). You can usually speed up compilation with the option -j:
-make -j class. If the first compilation attempt fails, you may need to
-open the Makefile and adapt the name of the compiler (default: gcc),
-of the optimization flag (default: -O4 -ffast-math) and of the OpenMP
-flag (default: -fopenmp; this flag is facultative, you are free to
-compile without OpenMP if you don't want parallel execution; note that
-you need the version 4.2 or higher of gcc to be able to compile with
--fopenmp). Many more details on the CLASS compilation are given on the
-wiki page
+-----
 
-https://github.com/lesgourg/class_public/wiki/Installation
+### 2\. Place the Data File
 
-(in particular, for compiling on Mac >= 10.9 despite of the clang
-incompatibility with OpenMP).
+Move the required pre-calculated DH data file into the `DarkHistory/decay_e` folder.
 
-To check that the code runs, type:
+```bash
+mv class_gomp/1.000000_24.000000_67.660000_0.260690_0.048970_0.060000_6.000000_-2.040000.txt DarkHistory/decay_e/
+```
 
-    ./class explanatory.ini
+-----
 
-The explanatory.ini file is THE reference input file, containing and
-explaining the use of all possible input parameters. We recommend to
-read it, to keep it unchanged (for future reference), and to create
-for your own purposes some shorter input files, containing only the
-input lines which are useful for you. Input files must have a *.ini
-extension. We provide an example of an input file containing a
-selection of the most used parameters, default.ini, that you may use as a
-starting point.
+### 3\. Set the Environment Variable
 
-If you want to play with the precision/speed of the code, you can use
-one of the provided precision files (e.g. cl_permille.pre) or modify
-one of them, and run with two input files, for instance:
+You must set the $\text{DH\_DATA\_DIR}$ environment variable to point to the base data directory you just created.
 
-    ./class test.ini cl_permille.pre
+```bash
+# NOTE: Update the path with the correct absolute path on the collaborator's machine.
+export DH_DATA_DIR=/path/to/file/DarkHistory/data
+```
 
-The files *.pre are suppposed to specify the precision parameters for
-which you don't want to keep default values. If you find it more
-convenient, you can pass these precision parameter values in your *.ini
-file instead of an additional *.pre file.
+-----
 
-The automatically-generated documentation is located in
+### 4\. Run CLASS
 
-    doc/manual/html/index.html
-    doc/manual/CLASS_manual.pdf
+You can now run the $\text{DM\_Gomp.ini}$ parameter file from the `class_gomp` directory:
 
-On top of that, if you wish to modify the code, you will find lots of
-comments directly in the files.
+```bash
+# Navigate to your class_gomp directory
+cd class_gomp/
 
-Python
-------
-
-To use CLASS from python, or ipython notebooks, or from the Monte
-Python parameter extraction code, you need to compile not only the
-code, but also its python wrapper. This can be done by typing just
-'make' instead of 'make class' (or for speeding up: 'make -j'). More
-details on the wrapper and its compilation are found on the wiki page
-
-https://github.com/lesgourg/class_public/wiki
-
-Plotting utility
-----------------
-
-Since version 2.3, the package includes an improved plotting script
-called CPU.py (Class Plotting Utility), written by Benjamin Audren and
-Jesus Torrado. It can plot the Cl's, the P(k) or any other CLASS
-output, for one or several models, as well as their ratio or percentage
-difference. The syntax and list of available options is obtained by
-typing 'pyhton CPU.py -h'. There is a similar script for MATLAB,
-written by Thomas Tram. To use it, once in MATLAB, type 'help
-plot_CLASS_output.m'
-
-Developing the code
---------------------
-
-If you want to develop the code, we suggest that you download it from
-the github webpage
-
-https://github.com/lesgourg/class_public
-
-rather than from class-code.net. Then you will enjoy all the feature
-of git repositories. You can even develop your own branch and get it
-merged to the public distribution. For related instructions, check
-
-https://github.com/lesgourg/class_public/wiki/Public-Contributing
-
-Using the code
---------------
-
-You can use CLASS freely, provided that in your publications, you cite
-at least the paper `CLASS II: Approximation schemes <http://arxiv.org/abs/1104.2933>`. Feel free to cite more CLASS papers!
-
-Support
--------
-
-To get support, please open a new issue on the
-
-https://github.com/lesgourg/class_public
-
-webpage!
+# Then run the code
+./class DM_Gomp.ini
+```

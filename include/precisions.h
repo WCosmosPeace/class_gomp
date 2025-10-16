@@ -229,7 +229,7 @@ class_string_parameter(hyrec_path,"/external/HyRec2020/","hyrec_path") /**< Path
  * Reionization parameters
  */
 
-class_precision_parameter(reionization_z_start_max,double,50.0) /**< Maximum starting value in z for reionization */
+class_precision_parameter(reionization_z_start_max,double,900.0) /**< Maximum starting value in z for reionization */
 class_precision_parameter(reionization_sampling,double,1.5e-2)  /**< Minimum sampling density in z during reionization */
 class_precision_parameter(reionization_optical_depth_tol,double,1.0e-4) /**< Relative tolerance on finding the user-given optical depth of reionization given a certain redshift of reionization */
 class_precision_parameter(reionization_start_factor,double,8.0) /**< Searching optical depth corresponding to the redshift is started from an initial offset beyond z_reionization_start, multiplied by reionization_width */

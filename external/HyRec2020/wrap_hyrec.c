@@ -6,6 +6,7 @@
 #include "common.h"
 #include "thermodynamics.h"
 #include "wrap_hyrec.h"
+#include "loadtable.h"
 
 
 /**
@@ -138,6 +139,11 @@ int hyrec_dx_H_dz(struct thermodynamics* pth, struct thermohyrec* phy, double x_
   /** - convert to correct units, and retrieve derivative */
   *dx_H_dz = -1./(1.+z)* rec_dxHIIdlna(phy->data, model, xe, x_H, nH*1e-6, Hz, Tmat*kBoltz, Trad*kBoltz, iz, z);
 
+  if (pth->DH_has_exotic_injection == _TRUE_) {
+      *dx_H_dz += Calc_dxedz_dTdz(0, z, &pin->DHparams);
+      //printf("z = %e, dxHdz = %e\n", z, Calc_dxedz_dTdz(0, z, &pin->DHparams));
+  }
+
   /** - do error management */
   if(phy->data->error != 0){
     class_call_message(phy->error_message,"rec_dxHIIdlna",phy->data->error_message);
@@ -198,6 +204,9 @@ int hyrec_dx_He_dz(struct thermodynamics* pth, struct thermohyrec* phy, double x
 
     /** - convert to correct units, and retrieve derivative */
     *dx_He_dz = -1./(1.+z)* rec_helium_dxHeIIdlna(phy->data, z, 1.-x_H, xHeII, Hz) / phy->data->cosmo->fHe;
+    if (pth->DH_has_exotic_injection == _TRUE_) {
+      *dx_He_dz += Calc_dxedz_dTdz(1, z, &pin->DHparams);
+    }
 
     /** - do error management */
     if(phy->data->error != 0){

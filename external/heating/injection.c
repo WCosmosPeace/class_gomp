@@ -170,6 +170,9 @@ int injection_indices(struct thermodynamics* pth){
   if(pin->DM_decay_fraction!=0){
     pin->has_DM_dec = _TRUE_;
   }
+  if(pin->DHparams.DM_decay_flag!=0){
+    pin->DH_has_DM_dec = _TRUE_;
+  }
   if(pin->PBH_evaporation_fraction!=0){
     pin->has_PBH_eva = _TRUE_;
   }
@@ -181,6 +184,7 @@ int injection_indices(struct thermodynamics* pth){
   index_inj = 0;
   class_define_index(pin->index_inj_DM_ann  , pin->has_DM_ann  , index_inj, 1);
   class_define_index(pin->index_inj_DM_dec  , pin->has_DM_dec  , index_inj, 1);
+  class_define_index(pin->index_DH_inj_DM_dec  , pin->DH_has_DM_dec  , index_inj, 1);
   class_define_index(pin->index_inj_PBH_eva , pin->has_PBH_eva , index_inj, 1);
   class_define_index(pin->index_inj_PBH_acc , pin->has_PBH_acc , index_inj, 1);
   class_define_index(pin->index_inj_tot     , _TRUE_           , index_inj, 1);
@@ -425,6 +429,18 @@ int injection_energy_injection_at_z(struct injection* pin,
                  pin->error_message);
       if(pin->to_store == _TRUE_){
         pin->injection_table[pin->index_inj_DM_dec][pin->index_z_store] = rate;
+      }
+      dEdt += rate;
+    }
+  
+    if(pin->DH_has_DM_dec == _TRUE_){
+      class_call(DH_injection_rate_DM_decay(pin,
+                                         z,
+                                         &rate),
+                 pin->error_message,
+                 pin->error_message);
+      if(pin->to_store == _TRUE_){
+        pin->injection_table[pin->index_DH_inj_DM_dec][pin->index_z_store] = rate;
       }
       dEdt += rate;
     }
@@ -747,6 +763,25 @@ int injection_rate_DM_decay(struct injection * pin,
   /** - Calculate injection rates */
   *energy_rate = pin->rho_cdm*pin->DM_decay_fraction*pin->DM_decay_Gamma*
                  exp(-pin->DM_decay_Gamma*pin->t);                                                  // [J/(m^3 s)]
+
+  return _SUCCESS_;
+}
+
+/**
+ * Calculate injection from DM decay in DarkHistory.
+ *
+ * @param pin            Input: pointer to injection structure
+ * @param z              Input: redshift
+ * @param energy_rate    Output: energy density injection rate
+ * @return the error status
+ */
+int DH_injection_rate_DM_decay(struct injection * pin,
+                            double z,
+                            double * energy_rate){
+
+  /** - Calculate injection rates */
+  *energy_rate = pin->rho_cdm*(1./pin->DHparams.DM_lifetime)*
+                 exp(-pin->t/pin->DHparams.DM_lifetime);                                                  // [J/(m^3 s)]
 
   return _SUCCESS_;
 }

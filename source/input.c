@@ -2100,6 +2100,7 @@ int input_read_parameters_general(struct file_content * pfc,
   class_read_flag("get_perturbations_in_current_gauge",ppt->get_perturbations_in_current_gauge);
 
   /** 5) h in [-] and H_0/c in [1/Mpc = h/2997.9 = h*10^5/c] */
+  struct injection* pin = &(pth->in);
   /* Read */
   class_call(parser_read_double(pfc,"H0",&param1,&flag1,errmsg),
              errmsg,
@@ -2115,10 +2116,12 @@ int input_read_parameters_general(struct file_content * pfc,
   if (flag1 == _TRUE_){
     pba->H0 = param1*1.e3/_c_;
     pba->h = param1/100.;
+    pin->DHparams.Cosmo_hubble_constant = param1;
   }
   if (flag2 == _TRUE_){
     pba->H0 = param2*1.e5/_c_;
     pba->h = param2;
+    pin->DHparams.Cosmo_hubble_constant = param2*100;
   }
 
 
@@ -2316,8 +2319,10 @@ int input_read_parameters_general(struct file_content * pfc,
     class_read_double("helium_fullreio_width",pth->helium_fullreio_width);
     /* reading alpha_gomp the pivot parameter of the universality */
     class_read_double("alpha_gomp",pth->alpha_gomp);
+    pin->DHparams.Gomp_lna_pivot=pth->alpha_gomp;
     /* reading beta_gomp the tilt parameter of the universailty */
     class_read_double("beta_gomp",pth->beta_gomp);
+    pin->DHparams.Gomp_tilt=pth->beta_gomp;
     /* Test */
     class_test(((flag1 == _TRUE_) && (flag2 == _TRUE_)),
                      errmsg,
@@ -2475,6 +2480,7 @@ int input_read_parameters_species(struct file_content * pfc,
   short has_m_budget = _FALSE_, has_cdm_userdefined = _FALSE_;
   double Omega_m_remaining = 0.;
 
+  struct injection* pin = &(pth->in);
 
   sigma_B = 2.*pow(_PI_,5.)*pow(_k_B_,4.)/15./pow(_h_P_,3.)/pow(_c_,2);  // [W/(m^2 K^4) = Kg/(K^4 s^3)]
 
@@ -2531,9 +2537,11 @@ int input_read_parameters_species(struct file_content * pfc,
   /* Complete set of parameters */
   if (flag1 == _TRUE_){
     pba->Omega0_b = param1;
+    pin->DHparams.Cosmo_Omega_baryon = param1;
   }
   if (flag2 == _TRUE_){
     pba->Omega0_b = param2/pba->h/pba->h;
+    pin->DHparams.Cosmo_Omega_baryon = param2/pba->h/pba->h;
   }
   class_test(pba->Omega0_b<0,errmsg,"You cannot set the baryon density to negative values.");
 
@@ -2606,10 +2614,12 @@ int input_read_parameters_species(struct file_content * pfc,
   if (flag1 == _TRUE_){
     pba->Omega0_cdm = param1;
     has_cdm_userdefined = _TRUE_;
+    pin->DHparams.Cosmo_Omega_DM = param1;
   }
   if (flag2 == _TRUE_){
     pba->Omega0_cdm = param2/pba->h/pba->h;
     has_cdm_userdefined = _TRUE_;
+    pin->DHparams.Cosmo_Omega_DM = param2/pba->h/pba->h;
   }
   class_test(pba->Omega0_cdm<0,errmsg, "You cannot set the cold dark matter density to negative values.");
 
@@ -2815,6 +2825,12 @@ int input_read_parameters_species(struct file_content * pfc,
     class_test(Omega_m_remaining < pba->Omega0_ncdm_tot, errmsg, "Too much energy density from massive species. At this point only %e is left for Omega_m, but requested 'Omega_ncdm = %e' (summed over all species)",Omega_m_remaining, pba->Omega0_ncdm_tot);
     Omega_m_remaining-= pba->Omega0_ncdm_tot;
   }
+
+  double m_ncdm_tot;
+  for (n=0; n<N_ncdm; n++){
+    m_ncdm_tot +=  pba->m_ncdm_in_eV[n];
+  }
+  pin->DHparams.Cosmo_mnu=m_ncdm_tot;
 
   /** 6) Omega_0_k (effective fractional density of curvature) */
   /* Read */
@@ -3588,6 +3604,51 @@ int input_read_parameters_injection(struct file_content * pfc,
   /* Read */
   class_read_double("DM_decay_Gamma",pin->DM_decay_Gamma);
 
+  // DarkHistory decay module
+  /** 2) DM decay calculated by DarkHistory*/
+  /** 2.a) Enable DarkHistory decay calculation */
+  /* Read */
+  class_read_int("DH_DM_decay_flag", pin->DHparams.DM_decay_flag);
+  if (pin->DHparams.DM_decay_flag == 1){
+    pth->DH_has_exotic_injection = _TRUE_;
+  }
+  /** 2.b) DM mass */
+  /* Read */
+  class_read_double("DH_DM_decay_mass",pin->DHparams.DM_mass);
+  /* Test */
+  class_test(pin->DHparams.DM_mass<0.,
+             errmsg,
+             "You need to enter a positive mass for your decaying DM. Please adjust your param file.");
+  /** 2.c) Decay width */
+  double DH_lifetime_param_value, DH_lifetime_param_exponent;
+  int DH_flag_lifetime_value, DH_flag_lifetime_exponent;
+  /* Read */
+  class_call(parser_read_double(pfc,"DH_DM_decay_lifetime_value",&DH_lifetime_param_value, &DH_flag_lifetime_value, errmsg),
+             errmsg,
+             errmsg);
+  class_call(parser_read_double(pfc,"DH_DM_decay_lifetime_exponent",&DH_lifetime_param_exponent, &DH_flag_lifetime_exponent, errmsg),  
+             errmsg,
+             errmsg);
+  // The term "DH_DM_decay_Gamma_exponent" is introduced for convenience of logarithmic sampling in MCMC. The exponent is base-10, i.e. Gamma = 10^(exponent).
+
+  /* Test: cannot set both value and exponent simultaneously */
+  class_test(((DH_flag_lifetime_value == _TRUE_) && (DH_flag_lifetime_exponent == _TRUE_)),
+             errmsg,
+             "You can only enter 'DH_DM_decay_Gamma_value' or 'DH_DM_decay_Gamma_exponent'.");
+
+  /* Complete set of parameters */
+  if (DH_flag_lifetime_value == _TRUE_){
+    pin->DHparams.DM_lifetime = DH_lifetime_param_value;
+  }
+  if (DH_flag_lifetime_exponent == _TRUE_){
+    pin->DHparams.DM_lifetime = pow(10.0, DH_lifetime_param_exponent);
+  }
+
+  /* Sanity check */
+  class_test(pin->DHparams.DM_lifetime<0,
+             errmsg,
+             "You cannot set the Dark Matter lifetime to negative values.");
+  // End of DarkHistory decay module
 
   /** 3) PBH evaporation */
   /** 3.a) Fraction */
@@ -6038,6 +6099,7 @@ int input_default_params(struct background *pba,
    * Deafult to input_read_parameters_heating
    */
   pth->has_exotic_injection = _FALSE_;
+  pth->DH_has_exotic_injection = _FALSE_;
 
   /** 1) DM annihilation */
   /** 1.a) Energy fraction absorbed by the gas */
@@ -6058,6 +6120,21 @@ int input_default_params(struct background *pba,
   pin->DM_decay_fraction = 0.;
   /** 2.b) Decay width */
   pin->DM_decay_Gamma = 0.;
+
+  /** 2) DM decay calculated by DarkHistory */
+  /** 2.a) Enable DarkHistory decay calculation */
+  pin->DHparams.DM_decay_flag = 0;
+  /** 2.b) DM decay parameters */
+  pin->DHparams.DM_mass = 0.;
+  pin->DHparams.DM_lifetime = 0.;
+  /** 2.c) Cosmological parameters */
+  pin->DHparams.Cosmo_hubble_constant = 0.;
+  pin->DHparams.Cosmo_Omega_DM = 0.;
+  pin->DHparams.Cosmo_Omega_baryon = 0.;
+  pin->DHparams.Cosmo_mnu = 0.;
+  /** 2.d) Gomp reionization parameters */
+  pin->DHparams.Gomp_tilt = 0.;
+  pin->DHparams.Gomp_lna_pivot = 0.;
 
   /** 3) PBH evaporation */
   /** 3.a) Fraction */
