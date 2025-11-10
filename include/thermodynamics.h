@@ -159,7 +159,7 @@ struct thermodynamics
                                  anisotropies (and spectral
                                  distorsions if requested). */
 
-  short DH_has_exotic_injection;
+  short DH_has_exotic_injection;  /**< flag: 1 if DM decay/annihilation injects energy into the plasma, 0 otherwise */
 
   struct injection in; /**< structure to store exotic energy injections and their energy deposition */
 

@@ -3013,16 +3013,35 @@ int thermodynamics_derivs(
     if (pth->has_exotic_injection == _TRUE_) {
       dy[ptv->index_ti_D_Tmat] -= pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+z));
     }
-    if (pth->DH_has_exotic_injection == _TRUE_) {
-      if(z<=2910){
-        dy[ptv->index_ti_D_Tmat] += Calc_dxedz_dTdz(2, z, &pin->DHparams);
-        //printf("z = %f, dT = %e\n", z, dy[ptv->index_ti_D_Tmat]);
+  if (pth->DH_has_exotic_injection == _TRUE_) {
+      static double factor = 0.0; 
+      static char factor_calculated = 0;
+
+      // At z = 3.09, compute the ratio between DarkHistory (DH) and CLASS temperature evolution
+      // This factor is used to correct CLASS heat deposition at low redshifts
+      if (z == 3.09 && factor_calculated == 0){
+          
+          double DH_dTdz = Calc_dxedz_dTdz(2, 3.09, &pin->DHparams); // DH temperature change rate
+          double CLASS_dTdz = - pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+3.09)); // CLASS heat deposition
+          
+          factor = DH_dTdz / CLASS_dTdz; // Correction factor to match DH and CLASS
+          factor_calculated = 1;
       }
-      else if(z>2910){
-        dy[ptv->index_ti_D_Tmat] -= pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+z)); 
-        //printf("z = %f, dT = %e\n", z, dy[ptv->index_ti_D_Tmat]);
-      } 
-    }
+
+      // Redshift range where DH evolution is valid
+      if(z >= 3.0811 && z <= 2910.3366){
+          dy[ptv->index_ti_D_Tmat] += Calc_dxedz_dTdz(2, z, &pin->DHparams); // Use DH energy injection
+      }
+      // Very high redshift: use standard CLASS heating
+      else if(z > 2910.3366){
+          dy[ptv->index_ti_D_Tmat] -= pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+z));
+      }
+      // Low redshift: apply factor to correct CLASS heating with DH result
+      else if(z < 3.0811){
+          dy[ptv->index_ti_D_Tmat] -= factor * pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+z));
+      }
+  }
+  
     /* Add term coming from idm_b */
     if (pth->has_idm_b == _TRUE_){
       mu_bar = _m_H_ / (1. + x + ptw->fHe) / (1. - pth->YHe); //In units of kg

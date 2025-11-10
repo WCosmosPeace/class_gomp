@@ -136,12 +136,19 @@ int hyrec_dx_H_dz(struct thermodynamics* pth, struct thermohyrec* phy, double x_
   if (Trad_phys <= TR_MIN || Tmat/Trad <= T_RATIO_MIN) { model = PEEBLES; }
   else { model = MODEL; }
 
-  /** - convert to correct units, and retrieve derivative */
-  *dx_H_dz = -1./(1.+z)* rec_dxHIIdlna(phy->data, model, xe, x_H, nH*1e-6, Hz, Tmat*kBoltz, Trad*kBoltz, iz, z);
-
   if (pth->DH_has_exotic_injection == _TRUE_) {
+    *dx_H_dz = -1./(1.+z)* rec_dxHIIdlna(phy->data, 1, xe, x_H, nH*1e-6, Hz, Tmat*kBoltz, Trad*kBoltz, iz, z);
+    if (x_H <= 1) {
       *dx_H_dz += Calc_dxedz_dTdz(0, z, &pin->DHparams);
+    }
+    else{
+      *dx_H_dz += 0;
+    }  
       //printf("z = %e, dxHdz = %e\n", z, Calc_dxedz_dTdz(0, z, &pin->DHparams));
+  }
+  else{
+    /** - convert to correct units, and retrieve derivative */
+    *dx_H_dz = -1./(1.+z)* rec_dxHIIdlna(phy->data, model, xe, x_H, nH*1e-6, Hz, Tmat*kBoltz, Trad*kBoltz, iz, z);
   }
 
   /** - do error management */
