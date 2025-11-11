@@ -1,4 +1,4 @@
-## Supplementary Information for $\text{DM\_Gomp.ini}$ (DarkHistory/CLASS Integration)
+## Supplementary Information for `DM_Gomp.ini` (DarkHistory/CLASS Integration)
 
 This branch, `DH_CLASS_integration`, includes Dark Matter decay integration using the DarkHistory.
 
@@ -31,7 +31,7 @@ mv class_gomp/1.000000_24.000000_67.660000_0.260690_0.048970_0.060000_6.000000_-
 
 ### 3\. Set the Environment Variable
 
-You must set the $\text{DH\_DATA\_DIR}$ environment variable to point to the base data directory you just created.
+You must set the `DH_DATA_DIR` environment variable to point to the base data directory you just created.
 
 ```bash
 # NOTE: Update the path with the correct absolute path on the collaborator's machine.
@@ -42,7 +42,7 @@ export DH_DATA_DIR=/path/to/file/DarkHistory/data
 
 ### 4\. Run CLASS
 
-You can now run the $\text{DM\_Gomp.ini}$ parameter file from the `class_gomp` directory:
+You can now run the `DM_Gomp.ini` parameter file from the `class_gomp` directory:
 
 ```bash
 # Navigate to your class_gomp directory
