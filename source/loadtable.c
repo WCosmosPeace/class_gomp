@@ -10,6 +10,7 @@
 static double DH_z[POINTS], DH_data[POINTS][3]; //DH_data[redshift][0/1/2](0: dxHII/dz, 1: dxHeII/dz, 2: dT/dz).
 static int DH_loaded = 0;   //The default value is 0; (1: decay).
 static int interp_method = 1; //(0: linear and 1: log)
+static struct DarkHistory_loaded_info last_loaded_params = {0};
 
 double Calc_dxedz_dTdz(int T_or_xe, double z, struct DarkHistory_decay *pDH){
 
@@ -33,7 +34,25 @@ double Calc_dxedz_dTdz(int T_or_xe, double z, struct DarkHistory_decay *pDH){
             exit(1); 
         }
 
+        int needs_reload = 0;
+
         if (!DH_loaded) {
+            needs_reload = 1;
+        } else {
+            if (pDH->DM_mass != last_loaded_params.DH_loaded_mass ||
+                pDH->DM_lifetime != last_loaded_params.DH_loaded_lifetime ||
+                pDH->Cosmo_hubble_constant != last_loaded_params.DH_loaded_H0 ||
+                pDH->Cosmo_Omega_DM != last_loaded_params.DH_loaded_Omega_cdm ||
+                pDH->Cosmo_Omega_baryon != last_loaded_params.DH_loaded_Omega_b ||
+                pDH->Cosmo_mnu != last_loaded_params.DH_loaded_mnu ||
+                pDH->Gomp_tilt != last_loaded_params.DH_loaded_tilt ||
+                pDH->Gomp_lna_pivot != last_loaded_params.DH_loaded_lna_pivot) 
+            {
+                needs_reload = 1;
+            }
+        }
+
+        if (needs_reload) {
             snprintf(filename, sizeof(filename),
                     "%s/../decay_e/%f_%f_%f_%f_%f_%f_%f_%f.txt",
                     data_path,
@@ -46,7 +65,7 @@ double Calc_dxedz_dTdz(int T_or_xe, double z, struct DarkHistory_decay *pDH){
                     pDH->Gomp_tilt,
                     pDH->Gomp_lna_pivot
             );
-            //printf("Attempting to open file: %s\n", filename);
+            printf("Attempting to open file: %s\n", filename);
 
             infile = fopen(filename, "r");
             if (infile == NULL) {
@@ -73,11 +92,19 @@ double Calc_dxedz_dTdz(int T_or_xe, double z, struct DarkHistory_decay *pDH){
                     fclose(infile);
                     return -1;
                 }
-                //printf("Read line %d: z = %lf, xe = %e, T = %e\n", i, DH_z[i], DH_data[i][0], DH_data[i][1]);
             }
             
             fclose(infile);
             DH_loaded = 1; 
+
+            last_loaded_params.DH_loaded_mass = pDH->DM_mass;
+            last_loaded_params.DH_loaded_lifetime = pDH->DM_lifetime;
+            last_loaded_params.DH_loaded_H0 = pDH->Cosmo_hubble_constant;
+            last_loaded_params.DH_loaded_Omega_cdm = pDH->Cosmo_Omega_DM;
+            last_loaded_params.DH_loaded_Omega_b = pDH->Cosmo_Omega_baryon;
+            last_loaded_params.DH_loaded_mnu = pDH->Cosmo_mnu;
+            last_loaded_params.DH_loaded_tilt = pDH->Gomp_tilt;
+            last_loaded_params.DH_loaded_lna_pivot = pDH->Gomp_lna_pivot;            
         }
 
         // Find the correct index

@@ -19,6 +19,18 @@ struct DarkHistory_decay{
     double Gomp_lna_pivot;
 };
 
+
+struct DarkHistory_loaded_info {
+    double DH_loaded_mass;
+    double DH_loaded_lifetime;
+    double DH_loaded_H0;
+    double DH_loaded_Omega_cdm;
+    double DH_loaded_Omega_b;
+    double DH_loaded_mnu;
+    double DH_loaded_tilt;
+    double DH_loaded_lna_pivot;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
