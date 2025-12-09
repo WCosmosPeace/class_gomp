@@ -1,0 +1,11 @@
+log10_mnu:
+  prior: 
+    min: -3.0
+    max: -0.9
+  ref: -1.222
+  proposal: 0.01
+  latex: \log_{10}\left(\sum m_\nu/\mathrm{eV}\right)
+
+mnu: 
+  derived: 'lambda log10_mnu: 10**log10_mnu'
+  latex: \sum m_\nu/\mathrm{eV}

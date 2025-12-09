@@ -1,0 +1,11 @@
+output: ../chains/srun_cmb_qdw_lens_bao/1e9/1e9
+
+sampler: !defaults [../sampler/mcmc]
+
+theory: !defaults [../theory/dm_gomp]
+likelihood: !defaults [../likelihood/cmb, ../likelihood/gomp_qdw, ../likelihood/lens, ../likelihood/bao]
+prior: !defaults [../prior/cmb]
+params: !defaults [../params/cosmo, ../params/gomp, ../params/Mnu, ../params/DM]
+
+debug: true
+stop_at_error: true

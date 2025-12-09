@@ -1,0 +1,13 @@
+mDM:
+  value: 1e9
+lifetime_exponent:
+  prior:
+    min: 24.0
+    max: 31.0
+  ref: 25.0
+  proposal: 0.05
+  latex: \log_{10}(\tau_\chi/\mathrm{s})
+
+lifetime:
+  derived: 'lambda lifetime_exponent: 10**lifetime_exponent'
+  latex: \tau_\chi/\mathrm{s'

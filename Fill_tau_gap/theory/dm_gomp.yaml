@@ -1,0 +1,3 @@
+dh_class:
+  python_path: /share06/users/w/wangyn/cobaya/fill_tau/theory
+  class: DH_CLASS.DHClassTheory
