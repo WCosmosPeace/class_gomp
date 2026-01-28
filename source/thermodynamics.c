@@ -855,6 +855,12 @@ int thermodynamics_workspace_init(
               sizeof(struct thermo_diffeq_workspace),
               pth->error_message);
 
+  /** - Initialize DarkHistory temperature correction bookkeeping */
+  ptw->ptdw->DH_T_factor = 1.0;               // default: no correction
+  ptw->ptdw->DH_T_factor_calculated = 0;      // factor not computed yet
+  ptw->ptdw->DH_has_prev_z = 0;               // previous z not initialized
+  ptw->ptdw->DH_z_prev = 0.0;                 // value irrelevant until DH_has_prev_z==1
+
   // Initialize ionisation fraction.
   ptw->ptdw->x_reio = 1.+2.*ptw->fHe;
   ptw->ptdw->x_noreio = 1.+2.*ptw->fHe;
@@ -3013,34 +3019,56 @@ int thermodynamics_derivs(
     if (pth->has_exotic_injection == _TRUE_) {
       dy[ptv->index_ti_D_Tmat] -= pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+z));
     }
-  if (pth->DH_has_exotic_injection == _TRUE_) {
-      static double factor = 0.0; 
-      static char factor_calculated = 0;
+    /* Add heating from energy injection calculated by DarkHistory */
+    if (pth->DH_has_exotic_injection == _TRUE_) {
 
-      // At z = 3.09, compute the ratio between DarkHistory (DH) and CLASS temperature evolution
-      // This factor is used to correct CLASS heat deposition at low redshifts
-      if (z == 3.09 && factor_calculated == 0){
-          
-          double DH_dTdz = Calc_dxedz_dTdz(2, 3.09, &pin->DHparams); // DH temperature change rate
-          double CLASS_dTdz = - pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+3.09)); // CLASS heat deposition
-          
-          factor = DH_dTdz / CLASS_dTdz; // Correction factor to match DH and CLASS
-          factor_calculated = 1;
-      }
+        /* --- compute DH_T_factor once when crossing z = 3.09 --- */
+        if (ptdw->DH_has_prev_z == 0) {
+            /* first call: just initialize previous z */
+            ptdw->DH_z_prev = z;
+            ptdw->DH_has_prev_z = 1;
+        }
+        else {
+            /* detect crossing (integration typically goes from high z to low z) */
+            if (ptdw->DH_T_factor_calculated == 0 &&
+                z <= 3.09 && ptdw->DH_z_prev > 3.09) {
 
-      // Redshift range where DH evolution is valid
-      if(z >= 3.0811 && z <= 2910.3366){
-          dy[ptv->index_ti_D_Tmat] += Calc_dxedz_dTdz(2, z, &pin->DHparams); // Use DH energy injection
-      }
-      // Very high redshift: use standard CLASS heating
-      else if(z > 2910.3366){
-          dy[ptv->index_ti_D_Tmat] -= pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+z));
-      }
-      // Low redshift: apply factor to correct CLASS heating with DH result
-      else if(z < 3.0811){
-          dy[ptv->index_ti_D_Tmat] -= factor * pin->pvecdeposition[pin->index_dep_heat] / heat_capacity / (Hz*(1.+z));
-      }
-  }
+                double DH_dTdz = Calc_dxedz_dTdz(2, 3.09, &pin->DHparams);
+                double CLASS_dTdz = - pin->pvecdeposition[pin->index_dep_heat]
+                                    / heat_capacity / (Hz * (1. + 3.09));
+
+                /* avoid division by zero / pathological values */
+                if (fabs(CLASS_dTdz) > 1e-60) {
+                    ptdw->DH_T_factor = DH_dTdz / CLASS_dTdz;
+                }
+                else {
+                    ptdw->DH_T_factor = 1.0;
+                }
+                ptdw->DH_T_factor_calculated = 1;
+            }
+
+            /* update previous z */
+            ptdw->DH_z_prev = z;
+        }
+
+        /* --- apply heating prescription --- */
+
+        /* Redshift range where DH evolution is valid */
+        if (z >= 3.0811 && z <= 2910.3366) {
+          dy[ptv->index_ti_D_Tmat] += Calc_dxedz_dTdz(2, z, &pin->DHparams);  // DH energy injection
+        }
+        /* Very high redshift: use standard CLASS heating */
+        else if (z > 2910.3366) {
+            dy[ptv->index_ti_D_Tmat] -= pin->pvecdeposition[pin->index_dep_heat]
+                                        / heat_capacity / (Hz * (1. + z));
+        }
+        /* Low redshift: apply factor to correct CLASS heating with DH result */
+        else { /* z < 3.0811 */
+            double factor = (ptdw->DH_T_factor_calculated ? ptdw->DH_T_factor : 1.0);
+            dy[ptv->index_ti_D_Tmat] -= factor * pin->pvecdeposition[pin->index_dep_heat]
+                                        / heat_capacity / (Hz * (1. + z));
+        }
+    }
   
     /* Add term coming from idm_b */
     if (pth->has_idm_b == _TRUE_){
@@ -3368,9 +3396,7 @@ int thermodynamics_reionization_get_tau(
       x_e_min = pth->thermodynamics_table[index_z*pth->th_size+pth->index_th_xe];
       index_reio_start = index_z;
     }
-    //printf("calculate tau redshift: %e    |  x_e:   %e\n", pth->z_table[index_z], pth->thermodynamics_table[index_z*pth->th_size+pth->index_th_xe]);
   }
-
   printf("reionization start = %e \n",pth->z_table[index_reio_start]);
 
   class_test(index_reio_start == pth->tt_size,

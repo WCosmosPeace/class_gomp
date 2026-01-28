@@ -434,6 +434,12 @@ struct thermo_diffeq_workspace {
   struct thermohyrec * phyrec;     /**< pointer to wrapper of HyRec structure */
   struct thermorecfast * precfast; /**< pointer to wrapper of RecFast structure */
 
+  /* --- DarkHistory temperature correction bookkeeping --- */
+  double DH_T_factor;              /**< Correction factor matching CLASS and DarkHistory dT/dz at z = 3.09 */
+  int DH_T_factor_calculated;      /**< Flag indicating whether DH_T_factor has been computed during this thermodynamics integration */
+  double DH_z_prev;                /**< Redshift at previous integration step (used to detect crossing of z = 3.09) */
+  int DH_has_prev_z;               /**< Flag indicating whether DH_z_prev has been initialized */
+
 };
 
 /**
