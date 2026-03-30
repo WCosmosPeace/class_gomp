@@ -1,129 +1,68 @@
-# Purpose: Integrates the DarkHistory and CLASS codes to calculate CMB anisotropies and thermal history
-# influenced by Dark Matter (DM) decay, specifically designed for use as a Cobaya Theory class.
-
-import sys
+import subprocess
+import json
 import os
-import argparse
-import yaml
-from cobaya.theory import Theory
-from copy import deepcopy
-import matplotlib as mpl
-mpl.rcParams.update(mpl.rcParamsDefault)
+import sys
 import numpy as np
+from copy import deepcopy
 
+from cobaya.theory import Theory
 from cobaya.conventions import Const
-
 H_units_conv_factor = {
     "1/Mpc": 1,
     "km/s/Mpc": Const.c_km_s
 }
 
-# =========================
-# DarkHistory Path Setup (MUST be done before importing darkhistory)
-# Setup paths to locate DarkHistory data and source directory based on DH_DATA_DIR environment variable.
-# =========================
+from classy import Class
+
+
 base_data_dir = os.environ.get("DH_DATA_DIR")
 if base_data_dir is None:
-    raise EnvironmentError("Please set DH_DATA_DIR environment variable before running.")
+    raise EnvironmentError("Please set DH_DATA_DIR")
 
-# DarkHistory root directory is the parent of DH_DATA_DIR
 base_dir = os.path.dirname(base_data_dir)
 sys.path.append(base_dir)
 
-
-# DarkHistory
-import darkhistory.physics as phys
-import darkhistory.main as main
-from darkhistory.config import load_data
-
-# CLASS
-from classy import Class
+logpath = os.path.join(os.getcwd(), "class_errors.log")
 
 def run_dh_class(cfg):
-    # Parameter extraction and validation.
-    required_keys = [
-        "n_s",
-        "A_s",
-        "H0",
-        "omega_cdm",
-        "omega_b",
-        "log10_mnu",
-        "mDM",
-        "lifetime_exponent",
-        "alpha_gomp",
-        "beta_gomp",
-    ]
 
-    for k in required_keys:
-        if k not in cfg:
-            raise ValueError(f"Missing required parameter: {k}")
-
-    # -------------------------
-    # Fix: compute h and omegas from cfg (previous code used cosmo_params before definition)
-    # -------------------------
     h = float(cfg["H0"]) / 100.0
     omega_b = float(cfg["omega_b"])
     omega_cdm = float(cfg["omega_cdm"])
+
     Omega_b = omega_b / h**2
     Omega_cdm = omega_cdm / h**2
 
-    cosmo_params = {
-        "H0": float(cfg["H0"]),
-        "Omega_cdm": Omega_cdm,
-        "Omega_b": Omega_b,
-        "mnu": 10 ** float(cfg["log10_mnu"]),
-    }
-
     mDM = float(cfg["mDM"])
     lifetime_exponent = float(cfg["lifetime_exponent"])
-    lifetime = 10 ** lifetime_exponent
     lna_pivot = float(cfg["alpha_gomp"])
     tilt = float(cfg["beta_gomp"])
-    inj_particle = cfg.get("inj_particle", "decay_e")
 
-    # Set cosmology params globally for DarkHistory.
-    phys.set_cosmology_params(cosmo_params)
-
-    # Construct unique filename for caching results.
+    mnu = max(float(cfg["mnu"]), 1e-5)
+    if not np.isfinite(mnu):
+        raise ValueError(f"Non-finite mnu in run_class: {cfg['mnu']}")
+    
     M = mDM / 1e9
-    tau_str = "{:.6f}".format(lifetime_exponent)
+    tau_str = f"{lifetime_exponent:.6f}"
 
-    decay_dir = os.path.join(base_dir, inj_particle)
-    os.makedirs(decay_dir, exist_ok=True)
-
+    decay_dir = os.path.join(base_dir, "decay_e")
     filename = os.path.join(
         decay_dir,
-        f"{M:.6f}_{tau_str}_{cosmo_params['H0']:.6f}_{cosmo_params['Omega_cdm']:.6f}_{cosmo_params['Omega_b']:.6f}_{cosmo_params['mnu']:.6f}_{tilt:.6f}_{lna_pivot:.6f}.txt"
+        f"{M:.6f}_{tau_str}_{cfg['H0']:.6f}_{Omega_cdm:.6f}_"
+        f"{Omega_b:.6f}_{cfg['mnu']:.6f}_{tilt:.6f}_{lna_pivot:.6f}.txt"
     )
 
-    # =========================
-    # DarkHistory Execution
-    # Runs the DarkHistory evolution if the result file does not exist, calculating energy deposition.
-    # =========================
-    binning = load_data('binning')
-    dep_tf_data = load_data('dep_tf')
-    ics_tf_data = load_data('ics_tf')
     if not os.path.exists(filename):
-        try:
-            _ = main.evolve(
-                mDM=mDM, DM_process='decay',
-                lifetime=lifetime,
-                primary=inj_particle,
-                start_rs=3000, end_rs=4,
-                coarsen_factor=30,
-                backreaction=True,
-                reion_switch=True,
-                reion_rs=800,
-                lna_pivot=lna_pivot, tilt=tilt,
-                binning=binning,
-                dep_tf_data=dep_tf_data,
-                ics_tf_data=ics_tf_data
-            )
-        except Exception as e:
-            # record error to file for debugging
-            with open("/tmp/dh_errors.log", "a") as f:
-                f.write(f"DH ERROR for params {cfg}: {e}\n")
-            raise RuntimeError(f"DarkHistory failed: {e}")
+        cmd = [
+            sys.executable,
+            os.path.join(os.path.dirname(__file__), "run_dh_only.py"),
+            json.dumps(cfg),
+        ]
+
+        ret = subprocess.run(cmd)
+
+        if ret.returncode != 0:
+            raise RuntimeError("DarkHistory subprocess failed")
 
     # =========================
     # CLASS Execution
@@ -146,7 +85,7 @@ def run_dh_class(cfg):
         'N_ur': 2.0308,
         'T_ncdm': 0.71611,
         'N_ncdm': 1,
-        'm_ncdm': cosmo_params["mnu"],
+        'm_ncdm': mnu,
 
         # gomp reionization
         'reio_parametrization': 'reio_gomp_noSR',
@@ -201,7 +140,7 @@ def run_dh_class(cfg):
         G.set(Gomp_DM)
         G.compute()
     except Exception as e:
-        with open("/tmp/class_errors.log", "a") as f:
+        with open(logpath, "a") as f:
             f.write(f"CLASS ERROR for params {cfg}: {e}\n")
         raise RuntimeError(f"CLASS failed: {e}")
 
@@ -225,7 +164,6 @@ def run_dh_class(cfg):
         'G': G
     }
 
-
 # =======================================
 # Cobaya Theory Class
 # Provides an interface for Cobaya to run the DH+CLASS calculation and retrieve results (Cls and derived parameters).
@@ -240,7 +178,7 @@ class DHClassTheory(Theory):
         "omega_cdm": None,
         "omega_b": None,
 
-        "log10_mnu": None,
+        "mnu": None,
 
         "mDM": None,
         "lifetime_exponent": None,
@@ -405,3 +343,4 @@ class DHClassTheory(Theory):
                     cls[cl_name][2:] *= ell_factor_array ** (3 / 2) * np.sqrt(2 * np.pi)
 
         return cls
+

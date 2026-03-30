@@ -1,4 +1,4 @@
-output: ../chains/cmb_qdw_lens_bao/1e9_1/1e9_1
+output: ../chains/mcmc
 
 sampler: !defaults [../sampler/mcmc]
 
@@ -7,5 +7,5 @@ likelihood: !defaults [../likelihood/cmb, ../likelihood/gomp_qdw, ../likelihood/
 prior: !defaults [../prior/cmb]
 params: !defaults [../params/cosmo, ../params/gomp, ../params/Mnu, ../params/DM]
 
-debug: true
-stop_at_error: true
+debug: false
+stop_at_error: false

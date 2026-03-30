@@ -1,3 +1,3 @@
 dh_class:
-  python_path: /share06/users/w/wangyn/cobaya/fill_tau/theory
-  class: DH_CLASS.DHClassTheory
+  python_path: /share06/users/w/wangyn/cobaya/Fill_tau_gap/theory  # Absolute path to the directory containing run_class.py (i.e. where run_class.DHClassTheory is defined)
+  class: run_class.DHClassTheory
