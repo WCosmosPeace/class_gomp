@@ -2826,7 +2826,7 @@ int input_read_parameters_species(struct file_content * pfc,
     Omega_m_remaining-= pba->Omega0_ncdm_tot;
   }
 
-  double m_ncdm_tot;
+  double m_ncdm_tot = 0.0;
   for (n=0; n<N_ncdm; n++){
     m_ncdm_tot +=  pba->m_ncdm_in_eV[n];
   }

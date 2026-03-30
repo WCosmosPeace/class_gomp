@@ -137,7 +137,8 @@ int hyrec_dx_H_dz(struct thermodynamics* pth, struct thermohyrec* phy, double x_
   else { model = MODEL; }
 
   if (pth->DH_has_exotic_injection == _TRUE_) {
-    *dx_H_dz = -1./(1.+z)* rec_dxHIIdlna(phy->data, 1, xe, x_H, nH*1e-6, Hz, Tmat*kBoltz, Trad*kBoltz, iz, z);
+    //*dx_H_dz = -1./(1.+z)* rec_dxHIIdlna(phy->data, 1, xe, x_H, nH*1e-6, Hz, Tmat*kBoltz, Trad*kBoltz, iz, z);   // recombination = HyRec[RECFAST] (consistent with DarkHistory)
+    *dx_H_dz = -1./(1.+z)* rec_dxHIIdlna(phy->data, model, xe, x_H, nH*1e-6, Hz, Tmat*kBoltz, Trad*kBoltz, iz, z);  // recombination = HyRec[full] (CLASS default model)
     if (x_H <= 1) {
       *dx_H_dz += Calc_dxedz_dTdz(0, z, &pin->DHparams);
     }
