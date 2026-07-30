@@ -1,53 +1,106 @@
-## Supplementary Information for `DM_Gomp.ini` (DarkHistory/CLASS Integration)
+# `DarkHistory` Integration for Decaying Dark Matter
 
-This branch, `DH_CLASS_integration`, includes Dark Matter decay integration using the DarkHistory.
+This branch, `DH_CLASS_integration`, extends `class_gomp` to include the ionization and thermal histories produced by decaying dark matter using `DarkHistory`.
 
-To successfully run the included parameter file, `DM_Gomp.ini`, **without a full installation of the DarkHistory code**, please follow these steps to simulate the expected data environment.
+The repository provides:
 
------
+* a Jupyter notebook demonstrating the complete
+  `DarkHistory → class_gomp → CMB spectra` workflow;
+* example `Cobaya` configuration files for parameter inference with the extended model.
 
-### 1\. Set up the Data Directory Structure
+The required history table is generated automatically by the notebook and cached for subsequent runs.
 
-Ensure the `DarkHistory` directory is **at the same level** as the `class_gomp` directory. You will need to create the required subdirectories within it:
+## Repository contents
 
-```bash
-# Navigate to the directory containing both class_gomp and DarkHistory
-# If DarkHistory doesn't exist yet, this creates the necessary structure:
-mkdir -p DarkHistory/data
-mkdir -p DarkHistory/decay_e
+### Jupyter notebook
+
+```text
+notebooks/Gomp_DM_decay_CMB_example.ipynb
 ```
 
------
+The notebook demonstrates how to:
 
-### 2\. Place the Data File
+1. define a decaying-dark-matter model and a Gomp reionization history;
+2. run `DarkHistory` to calculate the ionization and thermal history;
+3. save or reuse the resulting `DarkHistory` cache;
+4. pass the corresponding model parameters to `class_gomp`;
+5. calculate the CMB angular power spectra;
+6. compare the Gomp and Gomp + DM-decay models.
 
-Move the required pre-calculated DH data file into the `DarkHistory/decay_e` folder.
+The included example uses the decay channel $\chi\rightarrow e^+e^-$, with $m_\chi=1~\mathrm{GeV}$.
 
-```bash
-mv class_gomp/1.000000_24.000000_67.660000_0.260690_0.048970_0.060000_6.000000_-2.040000.txt DarkHistory/decay_e/
+### Cobaya configurations
+
+The Cobaya configuration files are stored in:
+
+```text
+cobaya/
 ```
 
------
+These files provide example likelihood, parameter, prior, and sampler settings for parameter inference with `class_gomp`. External likelihood data and machine-specific paths must be configured before use.
 
-### 3\. Set the Environment Variable
+The Cobaya configurations are not required to run the Jupyter notebook.
 
-You must set the `DH_DATA_DIR` environment variable to point to the base data directory you just created.
+## Directory structure
 
-```bash
-# NOTE: Update the path with the correct absolute path on the collaborator's machine.
-export DH_DATA_DIR=/path/to/file/DarkHistory/data
+The integration expects the `class_gomp` and `DarkHistory` directories to be located at the same level:
+
+```text
+project-directory/
+├── class_gomp/
+│   ├── notebooks/
+│   │   └── Gomp_DM_decay_CMB_example.ipynb
+│   └── cobaya/
+└── DarkHistory/
+    ├── darkhistory/
+    ├── data/
+    │   ├── decay/
+    │   │   └── decay_electron_gamma.txt
+    │   └── README.md
+    └── decay_e/
 ```
 
------
+The `data/` directory contains the DarkHistory transfer-function data.
+The `data/decay/decay_electron_gamma.txt` file contains the secondary photon injection spectra produced by dark matter decay into electron–positron pairs.
 
-### 4\. Run CLASS
+The `decay_e/` directory stores the ionization and thermal histories generated for the decay channel $\chi \rightarrow e^+e^-$. 
+A valid cached history is automatically reused when the same model parameters are requested again.
 
-You can now run the `DM_Gomp.ini` parameter file from the `class_gomp` directory:
+## Environment setup
+
+Set `DH_DATA_DIR` to the DarkHistory data directory before starting Jupyter:
 
 ```bash
-# Navigate to your class_gomp directory
-cd class_gomp/
-
-# Then run the code
-./class DM_Gomp.ini
+export DH_DATA_DIR=/absolute/path/to/DarkHistory/data
 ```
+
+For example, if the two repositories are located under `/home/user/project/`, use:
+
+```bash
+export DH_DATA_DIR=/home/user/project/DarkHistory/data
+```
+
+The environment variable must be set before the Jupyter kernel starts. After changing it, restart the kernel.
+
+## Compile the Python wrapper
+
+Compile the `classy` Python wrapper from this `class_gomp` branch and make sure that it is importable from the Python environment used by Jupyter and Cobaya.
+
+The following check should import the wrapper compiled from this repository rather than a standard CLASS installation:
+
+```bash
+python -c "from classy import Class; import classy; print(classy.__file__)"
+```
+
+Also verify the compatible DarkHistory installation:
+
+```bash
+python -c "import darkhistory; print(darkhistory.__file__)"
+```
+
+## Notes
+
+* The notebook compares the two models at their respective posterior-mean parameter values. Their spectral difference therefore contains both the direct DM-decay contribution and shifts in the fitted cosmological and Gomp parameters.
+* Public Planck PR3 spectra are used only for visualization in the notebook.
+* DarkHistory cache files are generated locally and reused when available; they are not distributed with the repository.
+* Cobaya configuration files and run scripts are provided, while generated chains, checkpoints, logs, and scheduler outputs are not included.
