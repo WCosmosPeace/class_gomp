@@ -1,0 +1,19 @@
+mDM:
+  value: 1e9
+  latex: m_\chi/\mathrm{eV}
+
+g_decay:
+  prior:
+    min: 0.0
+    max: 10.0
+  ref: 1.0
+  proposal: 0.2
+  latex: g_{\rm decay}
+
+decay_rate:
+  derived: 'lambda g_decay: g_decay * 1e-24'
+  latex: \Gamma_\chi/\mathrm{s}^{-1}
+
+lifetime:
+  derived: 'lambda decay_rate: 1 / decay_rate if decay_rate > 0 else 1e100 '
+  latex: \tau_\chi/\mathrm{s}
